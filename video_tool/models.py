@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, model_config
+from pydantic import BaseModel, ConfigDict
 
 
 class AnalysisType(str, Enum):
@@ -21,7 +21,7 @@ class FrameSamplingStrategy(str, Enum):
 
 
 class VideoSource(BaseModel):
-    model_config = model_config(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     raw: str
     is_local: bool = False
@@ -29,7 +29,7 @@ class VideoSource(BaseModel):
 
 
 class FrameInfo(BaseModel):
-    model_config = model_config(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     index: int
     timestamp_sec: float
