@@ -1,3 +1,5 @@
+# DEPRECATED: This file is superseded by video_tool/analyzer.py, which uses
+# the anthropic SDK with claude-sonnet-4-6 and vision support.
 import os
 import requests
 
