@@ -1,5 +1,7 @@
 # Video Extraction & Analysis Tool
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/codedaddylive/claude-code-repo/blob/main/colab_demo.ipynb)
+
 Analyze videos from YouTube, Vimeo, TikTok, direct URLs, or local files using Claude AI vision and Whisper transcription.
 
 ## Features
