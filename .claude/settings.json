@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip list)",
+      "Bash(pip3 list)",
+      "Bash(pip show *)",
+      "Bash(pip3 show *)",
+      "Bash(pip3 index versions *)",
+      "Bash(uvicorn --help)",
+      "Bash(python3 -m pip list)",
+      "Bash(ffprobe *)"
+    ]
+  }
+}
