@@ -98,3 +98,38 @@ Input URL/path
 - Claude vision batches up to 10 frames per API call
 - All temp files cleaned up automatically after each run
 - API server uses --workers 1 (in-memory job store)
+
+---
+
+## Knowledge base (brain)
+
+Accumulated patterns, API notes, architecture decisions, and domain rules live in `knowledge/`.
+**Always consult these files before implementing something — they encode settled decisions.**
+
+Manage entries with `brain.py`:
+```bash
+python brain.py list                        # all entries
+python brain.py list --category patterns    # filter by category
+python brain.py search "fastapi"            # keyword search
+python brain.py show patterns/fastapi-endpoint.md  # read an entry
+python brain.py add --title "..." --category apis  # add new entry
+python brain.py rebuild-index               # regenerate index below
+```
+
+### Knowledge base index
+
+#### Patterns
+- **FastAPI endpoint patterns** — `knowledge/patterns/fastapi-endpoint.md`  tags: fastapi, python, api, routing
+- **Pydantic v2 model patterns** — `knowledge/patterns/pydantic-models.md`  tags: pydantic, python, validation, models
+- **Typer CLI patterns** — `knowledge/patterns/cli-typer.md`  tags: typer, cli, python
+
+#### Apis
+- **Anthropic Claude API usage** — `knowledge/apis/anthropic-claude.md`  tags: anthropic, claude, vision, ai, api
+- **OpenAI Whisper (local) usage** — `knowledge/apis/whisper-transcription.md`  tags: whisper, transcription, audio, python
+
+#### Architecture
+- **Preferred project layout** — `knowledge/architecture/project-layout.md`  tags: structure, layout, python, project
+- **Video analysis pipeline architecture** — `knowledge/architecture/video-pipeline.md`  tags: architecture, pipeline, video, design
+
+#### Domain
+- **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts
