@@ -101,19 +101,47 @@ Input URL/path
 
 ---
 
-## Knowledge base (brain)
+## Knowledge base (brain) — 5-step framework
 
-Accumulated patterns, API notes, architecture decisions, and domain rules live in `knowledge/`.
-**Always consult these files before implementing something — they encode settled decisions.**
+The brain sharpens through consistent reps, not perfect planning. Start by building.
+
+```
+BASE   →  raw/ (data lake)  +  knowledge/ (wiki)  +  skills in brain.py
+UPLOAD →  brain.py upload / ingest   (bulk-ingest files into review queue)
+INFLOW →  brain.py inflow add/run    (automated pipelines: Slack, transcripts, feeds)
+LOOP   →  brain.py queue / review    (3 buckets: auto-approve / need-signoff / need-context)
+DRIVE  →  brain.py list / search / show  (consume the wiki — always check before implementing)
+```
+
+**Always consult `knowledge/` before implementing something — these files encode settled decisions.**
 
 Manage entries with `brain.py`:
 ```bash
-python brain.py list                        # all entries
-python brain.py list --category patterns    # filter by category
-python brain.py search "fastapi"            # keyword search
-python brain.py show patterns/fastapi-endpoint.md  # read an entry
-python brain.py add --title "..." --category apis  # add new entry
-python brain.py rebuild-index               # regenerate index below
+# DRIVE — consume the wiki
+python brain.py list                            # all entries
+python brain.py list --category patterns        # filter by category
+python brain.py search "fastapi"                # keyword search
+python brain.py show patterns/fastapi-endpoint.md
+python brain.py add --title "..." --category apis
+python brain.py status                          # full system overview
+
+# UPLOAD — ingest raw data
+python brain.py upload path/to/file.txt --category patterns
+python brain.py ingest                          # process all of raw/_inbox/
+
+# INFLOW — automated pipelines
+python brain.py inflow add                      # register a new source
+python brain.py inflow list                     # view sources
+python brain.py inflow run                      # pull from all active sources
+
+# LOOP — review queue
+python brain.py queue                           # view all 3 buckets
+python brain.py review                          # interactive review (a/r/s/q)
+python brain.py approve <id>                    # approve specific item
+python brain.py reject  <id>                    # reject specific item
+
+# MAINTAIN
+python brain.py rebuild-index                   # regenerate index below
 ```
 
 ### Knowledge base index
