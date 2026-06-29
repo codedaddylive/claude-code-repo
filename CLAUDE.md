@@ -1,3 +1,16 @@
+# GUARDRAIL — Scope Boundary
+
+**This repository is for ARIA improvements only.**
+
+Do NOT include, reference, push, or discuss anything related to:
+- Connect for Health Colorado (C4HCO)
+- C4 Report Builder (`c4-report-builder`)
+- Any code, data, credentials, or config from C4 projects
+
+If a task involves C4 or C4HCO in any way, stop and tell the user this repo is out of scope for that work.
+
+---
+
 # Video Extraction & Analysis Tool
 
 ## Project setup (run these first)
