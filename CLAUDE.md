@@ -101,9 +101,12 @@ Input URL/path
 
 ---
 
-## Knowledge base (brain) — 5-step framework
+## ARIA — Adaptive Reasoning Intelligence Archive
 
-The brain sharpens through consistent reps, not perfect planning. Start by building.
+**Invoke ARIA by name.** When you say "ARIA, build this" or "ARIA, create this", consult
+the knowledge base below first, then implement using the settled patterns and decisions it encodes.
+
+The system sharpens through consistent reps, not perfect planning. Start by building.
 
 ```
 BASE   →  raw/ (data lake)  +  knowledge/ (wiki)  +  skills in brain.py

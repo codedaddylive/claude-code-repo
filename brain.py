@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
-Brain CLI — 5-step knowledge system.
+ARIA — Adaptive Reasoning Intelligence Archive
 
+The knowledge brain for this project. Invoke it by name:
+  "ARIA, build this"  →  Claude checks knowledge/ first, then implements
+  "ARIA, create this" →  same — uses settled patterns and decisions
+
+5-step framework:
   BASE    knowledge/ (Wiki) + raw/ (Raw data lake)
-  UPLOAD  brain.py upload / ingest — bulk-ingest files into the queue
-  INFLOW  brain.py inflow — manage automated data pipelines
-  LOOP    brain.py queue / approve / reject — 3-bucket review loop
-  DRIVE   brain.py list / search / show / add — consume the knowledge
+  UPLOAD  brain.py upload / ingest  — bulk-ingest files into the review queue
+  INFLOW  brain.py inflow           — manage automated data pipelines
+  LOOP    brain.py queue / review   — 3-bucket review (auto-approve / signoff / context)
+  DRIVE   brain.py list / search / show — consume the knowledge wiki
 """
 
 import json
@@ -21,7 +26,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
-app = typer.Typer(help="Brain — knowledge base + ingestion pipeline.", add_completion=False)
+app = typer.Typer(help="ARIA — Adaptive Reasoning Intelligence Archive.", add_completion=False)
 console = Console()
 
 ROOT          = Path(__file__).parent
@@ -232,7 +237,7 @@ def ingest(
 
 # ── INFLOW ────────────────────────────────────────────────────────────────────
 
-inflow_app = typer.Typer(help="Manage automated data pipelines (INFLOW step).")
+inflow_app = typer.Typer(help="ARIA INFLOW — manage automated data pipelines.")
 app.add_typer(inflow_app, name="inflow")
 
 SOURCE_TYPES = ["folder", "slack-export", "transcript", "feed", "email-export", "manual"]

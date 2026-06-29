@@ -1,4 +1,4 @@
-# Raw Data Lake
+# ARIA — Raw Data Lake
 
 Unprocessed input data that feeds the knowledge base. Nothing here is "knowledge" yet —
 it's the raw material the LOOP refines into the Wiki (`knowledge/`).
