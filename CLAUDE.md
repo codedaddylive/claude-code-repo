@@ -187,8 +187,27 @@ python brain.py rebuild-index                   # regenerate index below
 - **Palmier Pro: AI-Native Video Editor with MCP** — `knowledge/architecture/palmier-pro-ai-video-editor.md`  tags: mcp, swift, video-editing, macos, avfoundation
 - **Hermes Agent — Self-Improving Personal AI Agent** — `knowledge/architecture/hermes-agent-nous-research.md`  tags: ai-agent, self-improving, multi-platform, model-agnostic
 - **Voicebox: Local-First AI Voice Studio** — `knowledge/architecture/voicebox-local-ai-voice-studio.md`  tags: voice-cloning, tts, local-first, tauri, mcp
+- **Squad: Multi-Agent AI Coordination** — `knowledge/architecture/squad-multi-agent.md`  tags: multi-agent, coordination, sqlite, cli, claude-code, gemini
 
 #### Domain
 - **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts
 - **Anthropic Cybersecurity Skills Library** — `knowledge/domain/anthropic-cybersecurity-skills.md`  tags: cybersecurity, agent-skills, mitre-attack, security-workflows
 - **Unlimited OCR — Single-Pass Long-Document Parsing** — `knowledge/domain/unlimited-ocr-baidu.md`  tags: ocr, document-parsing, vlm, sglang, pdf
+
+## Squad Collaboration
+
+This project uses [Squad](https://github.com/mco-org/squad) for multi-agent AI coordination.
+Squad agents communicate via SQLite and can span Claude Code, Gemini, Codex, and OpenCode.
+
+```bash
+# Start a multi-agent session (use /squad slash command in Claude Code)
+squad join <id> --role manager|worker|inspector
+squad agents                          # see who's online
+squad task create manager worker "<title>"
+squad send <id> manager "<message>"
+squad receive <id>
+```
+
+Roles in `.squad/roles/` are ARIA-aware — they check `brain.py` before acting.
+See `knowledge/architecture/squad-multi-agent.md` for the full reference.
+
