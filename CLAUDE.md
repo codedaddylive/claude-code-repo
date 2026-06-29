@@ -101,6 +101,21 @@ Input URL/path
 
 ---
 
+## Agent Skills (via Vercel Skills CLI)
+
+Before writing code for a common task, check if an installable skill already exists:
+
+```bash
+npx skills find [query]          # search the ecosystem
+npx skills add <owner/repo>      # install a skill
+npx skills add -g -y <pkg>       # install globally, no prompts
+```
+
+Browse at **https://skills.sh/** — prefer skills with 1K+ installs from `vercel-labs`, `anthropics`, or `microsoft`.
+The `find-skills` skill is already installed — ask "find a skill for X" and it will search for you.
+
+---
+
 ## ARIA — Adaptive Reasoning Intelligence Archive
 
 **Invoke ARIA by name.** When you say "ARIA, build this" or "ARIA, create this", consult
