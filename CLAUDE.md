@@ -173,6 +173,7 @@ python brain.py rebuild-index                   # regenerate index below
 #### Apis
 - **Anthropic Claude API usage** — `knowledge/apis/anthropic-claude.md`  tags: anthropic, claude, vision, ai, api
 - **OpenAI Whisper (local) usage** — `knowledge/apis/whisper-transcription.md`  tags: whisper, transcription, audio, python
+- **NVIDIA LocateAnything-3B — Visual Grounding API** — `knowledge/apis/locate-anything.md`  tags: object-detection, visual-grounding, bounding-box, video-pipeline, nvidia
 
 #### Architecture
 - **Preferred project layout** — `knowledge/architecture/project-layout.md`  tags: structure, layout, python, project
