@@ -1,3 +1,7 @@
+@agents.md
+@memory.md
+@context/project-overview.md
+
 # GUARDRAIL — Scope Boundary
 
 **This repository is for ARIA improvements only.**
