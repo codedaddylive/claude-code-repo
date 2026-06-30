@@ -16,3 +16,4 @@ build/
 frames/
 .squad/sessions/
 .squad/messages.db
+.squad/
