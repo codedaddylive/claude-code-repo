@@ -205,6 +205,7 @@ python brain.py rebuild-index                   # regenerate index below
 - **Hermes Agent — Self-Improving Personal AI Agent** — `knowledge/architecture/hermes-agent-nous-research.md`  tags: ai-agent, self-improving, multi-platform, model-agnostic
 - **Voicebox: Local-First AI Voice Studio** — `knowledge/architecture/voicebox-local-ai-voice-studio.md`  tags: voice-cloning, tts, local-first, tauri, mcp
 - **Squad: Multi-Agent AI Coordination** — `knowledge/architecture/squad-multi-agent.md`  tags: multi-agent, coordination, sqlite, cli, claude-code, gemini
+- **Autonomous Loop Engineering** — `knowledge/architecture/autonomous-loop-engineering.md`  tags: autonomous-loops, agent-engineering, triggers, goal-based, proactive
 
 #### Domain
 - **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts
