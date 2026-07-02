@@ -13,6 +13,7 @@ from .models import DownloadError, VideoSource
 
 _YTDLP_DOMAINS = re.compile(
     r"(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|twitter\.com|"
+    r"(?<!\w)x\.com|"
     r"instagram\.com|dailymotion\.com|twitch\.tv|facebook\.com)"
 )
 
@@ -31,23 +32,23 @@ def resolve_source(raw: str) -> VideoSource:
     return VideoSource(raw=raw, is_local=False)
 
 
-def download_video(source: VideoSource, output_dir: Path) -> Path:
+def download_video(source: VideoSource, output_dir: Path, cookies_file: Optional[Path] = None) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if source.is_local and source.local_path:
         return _copy_local_file(source.local_path, output_dir)
 
     if _YTDLP_DOMAINS.search(source.raw):
-        return _download_with_ytdlp(source.raw, output_dir)
+        return _download_with_ytdlp(source.raw, output_dir, cookies_file)
 
     # Try direct URL download; fall back to yt-dlp if Content-Type is not video
     try:
         return _download_direct_url(source.raw, output_dir)
     except DownloadError:
-        return _download_with_ytdlp(source.raw, output_dir)
+        return _download_with_ytdlp(source.raw, output_dir, cookies_file)
 
 
-def _download_with_ytdlp(url: str, output_dir: Path) -> Path:
+def _download_with_ytdlp(url: str, output_dir: Path, cookies_file: Optional[Path] = None) -> Path:
     ydl_opts = {
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
         "outtmpl": str(output_dir / "%(id)s.%(ext)s"),
@@ -55,6 +56,8 @@ def _download_with_ytdlp(url: str, output_dir: Path) -> Path:
         "no_warnings": True,
         "merge_output_format": "mp4",
     }
+    if cookies_file:
+        ydl_opts["cookiefile"] = str(cookies_file)
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
