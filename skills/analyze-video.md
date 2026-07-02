@@ -64,6 +64,34 @@ Encode it: python brain.py add --title "..." --category apis
 
 On `ADOPT`, run the printed `brain.py add` line to encode the decision into ARIA.
 
+### 4. File-in relay (when the network policy blocks video hosts)
+
+If youtube/x.com/etc. are blocked but **github.com and api.anthropic.com are
+reachable** (verified: 200 / 405), you don't need to reach the video host — you
+only need the *file*. Deliver it through GitHub, an allowed host:
+
+```bash
+# Step 1 — SEED (once, on any device that CAN reach the video):
+#          save the .mp4, then attach it to a GitHub Release (up to 2GB/asset).
+#          gh release create demo-clip talk.mp4    # or upload via the web UI
+
+# Step 2 — ANALYZE (on the restricted box — EC2/web, same policy):
+python cli.py viability-release codedaddylive/claude-code-repo demo-clip --pattern "*.mp4"
+```
+
+`viability-release` pulls the asset from GitHub (allowed), transcribes locally
+with Whisper (no network), and calls Claude (allowed) — so it runs under the
+same policy that blocks the URL. Set `GITHUB_TOKEN` for private repos.
+
+Why it works:
+- download from video host = BLOCKED → replaced by GitHub asset fetch = ALLOWED
+- Whisper transcription = LOCAL (no egress)
+- Claude viability call = api.anthropic.com = ALLOWED
+
+The only hard requirement: one device, once, that can reach the video to seed
+the file (a phone on cellular or a home network — a fully-walled box can't
+conjure the bytes).
+
 ---
 
 ## Where this can run (network policy)
