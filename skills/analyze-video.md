@@ -42,6 +42,44 @@ python cli.py transcribe "video.mp4" --model base
 python cli.py analyze "video.mp4" --max-frames 10 --output result.json
 ```
 
+### 3. Viability check (paste a link → adopt/investigate/skip verdict)
+
+Judge whether the tool/technique in a video is worth adopting into this stack.
+
+```bash
+python cli.py viability "<URL or /path/to/video.mp4>"
+python cli.py viability "https://x.com/user/status/123" --cookies cookies.txt  # auth-walled X
+python cli.py viability "<URL>" --output verdict.json
+```
+
+Downloads → transcribes (visual-summary fallback if no audio) → asks Claude to
+rate the content against the ARIA stack. Prints:
+
+```
+VERDICT: ADOPT  (confidence 80%)
+Reasoning: ...tied to FastAPI/yt-dlp/Whisper...
+Touches: FastAPI, yt-dlp
+Encode it: python brain.py add --title "..." --category apis
+```
+
+On `ADOPT`, run the printed `brain.py add` line to encode the decision into ARIA.
+
+---
+
+## Where this can run (network policy)
+
+Ingest needs outbound egress to the video host. **The Claude Code web
+environment blocks all video hosts** (youtube, x.com/twitter, vimeo, tiktok,
+instagram, dailymotion, even direct `.mp4` URLs — verified via proxy CONNECT
+log; only github/pypi/npm/anthropic are allowed). So links pasted into a *web*
+chat cannot be ingested.
+
+- **Run on a local/EC2 machine** for real ingest (open network).
+- **YouTube** additionally IP-blocks datacenter/Colab/EC2 addresses — use a
+  home network or a local file there.
+- To ingest from the web environment, its network policy must be widened at
+  environment-creation time: https://code.claude.com/docs/en/claude-code-on-the-web
+
 ---
 
 ## Output
@@ -64,7 +102,9 @@ Successful `result.json` contains:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| yt-dlp download blocked | Datacenter/Colab IP | Use a local file instead |
+| Connection fails / HTTP 000 in web env | Network policy blocks video hosts | Run locally, or widen the env network policy |
+| yt-dlp download blocked (403) | YouTube blocks datacenter/Colab/EC2 IP | Use a home network or a local file |
+| x.com link not routed | Only matched via fallback (slower) | Fixed — `x.com` now in downloader regex |
 | Whisper slow first run | Downloading ~150MB base model | Wait — cached after first run |
 | `ANTHROPIC_API_KEY` error | Key not exported | `export ANTHROPIC_API_KEY=sk-ant-...` |
 | Black MP4 on iPhone | WebM/VP8 output | Use imageio-ffmpeg binary for H.264 |
