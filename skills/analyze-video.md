@@ -64,7 +64,26 @@ Encode it: python brain.py add --title "..." --category apis
 
 On `ADOPT`, run the printed `brain.py add` line to encode the decision into ARIA.
 
-### 4. File-in relay (when the network policy blocks video hosts)
+### 4a. Transcript-in (lightest path — no video, no Whisper)
+
+For "is this a viable dev improvement," the spoken transcript is the whole
+signal. A transcript is plain text, so it needs zero video-host access — only
+the Claude API (allowed). This is the lightest way around a blocking policy.
+
+```bash
+# SEED (once, on an open-network device): grab captions — no video download
+pip install youtube-transcript-api
+youtube_transcript_api CaFXykOyqlk > transcript.txt      # or YouTube UI: "..." > Show transcript > copy
+
+# ANALYZE (anywhere the Claude API is reachable — EC2, or paste into chat)
+python cli.py viability-text --file transcript.txt --source "https://youtu.be/CaFXykOyqlk"
+cat transcript.txt | python cli.py viability-text -s "https://youtu.be/CaFXykOyqlk"
+```
+
+Fastest of all: paste the transcript text directly into a Claude Code chat and
+ask for the viability verdict — Claude judges it with no tool/network at all.
+
+### 4b. File-in relay (when you need the actual video, not just captions)
 
 If youtube/x.com/etc. are blocked but **github.com and api.anthropic.com are
 reachable** (verified: 200 / 405), you don't need to reach the video host — you

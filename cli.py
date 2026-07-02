@@ -234,6 +234,27 @@ def cmd_viability_release(
             raise typer.Exit(code=1)
 
 
+@app.command("viability-text")
+def cmd_viability_text(
+    file: Optional[Path] = typer.Option(None, "--file", "-f", help="Transcript/notes file; omit to read stdin"),
+    source: str = typer.Option("pasted-text", "--source", "-s", help="Label for the source (e.g. the video URL)"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save verdict JSON to file"),
+):
+    """Judge viability from a transcript or notes — no download, no Whisper. Works under any policy that allows the Claude API."""
+    content = file.read_text() if file else typer.get_text_stream("stdin").read()
+    if not content.strip():
+        console.print("[red]Error:[/red] no text provided (pass --file or pipe via stdin)")
+        raise typer.Exit(code=1)
+    try:
+        with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
+            progress.add_task("Assessing viability...", total=None)
+            assessment = assess_viability(source, content)
+        _finish_verdict(assessment, output)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1)
+
+
 def _assess_video(video_path, source_label, tmp, whisper_model, max_frames, progress, task):
     progress.update(task, description="Extracting audio...")
     audio_path = extract_audio(video_path, tmp / "audio.wav")
