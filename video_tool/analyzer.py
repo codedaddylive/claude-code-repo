@@ -22,11 +22,17 @@ from .models import (
 MODEL = "claude-sonnet-4-6"
 MAX_FRAMES_PER_CALL = 10
 
-STACK_CONTEXT = (
-    "Python 3.11+, FastAPI, Typer, Pydantic v2, yt-dlp, OpenCV + ffmpeg, "
-    "Whisper (local transcription), Anthropic Claude vision API, Squad (SQLite multi-agent). "
-    "The platform ingests video links, extracts frames + audio, transcribes, and analyzes with Claude vision."
+DEFAULT_STACK_CONTEXT = (
+    "A development team whose knowledge base (ARIA) spans multiple applications. "
+    "Preferred stack when relevant: Python 3.11+, FastAPI, Typer, Pydantic v2, "
+    "Anthropic Claude API, Squad (SQLite multi-agent). Judge fit against general "
+    "software-engineering value and reuse, not any single product domain."
 )
+
+
+def stack_context() -> str:
+    """Project context for viability judgments. Override per-project via ARIA_STACK_CONTEXT."""
+    return os.getenv("ARIA_STACK_CONTEXT") or DEFAULT_STACK_CONTEXT
 
 
 def get_client() -> anthropic.Anthropic:
@@ -179,17 +185,18 @@ def assess_viability(source: str, content: str) -> ViabilityAssessment:
     client = get_client()
     prompt = (
         "You evaluate whether a tool, technique, or idea is a viable DEVELOPMENT IMPROVEMENT "
-        f"for this existing platform:\n{STACK_CONTEXT}\n\n"
+        f"for this team:\n{stack_context()}\n\n"
         f"Source: {source}\n\n"
-        f"Content (transcript / summary of the linked video):\n{content[:12000]}\n\n"
+        f"Content (transcript / summary / notes):\n{content[:12000]}\n\n"
         "Decide one verdict:\n"
-        "- adopt: clearly worth integrating; fits the stack and adds real value\n"
+        "- adopt: clearly worth integrating; reusable and adds real engineering value\n"
         "- investigate: promising but needs a spike or has open questions\n"
-        "- skip: off-stack, low value, or redundant with what already exists\n\n"
+        "- skip: low value, or redundant with what already exists\n"
+        "Do NOT penalize an idea merely for being outside any single product domain.\n\n"
         "Respond ONLY with a JSON object, no other text:\n"
         '{"verdict": "adopt|investigate|skip", "confidence": 0.0-1.0, '
-        '"reasoning": "2-3 sentences tied to the stack", '
-        '"relevant_to_stack": ["component", ...], '
+        '"reasoning": "2-3 sentences on engineering value and reuse", '
+        '"relevant_to_stack": ["component or area", ...], '
         '"suggested_category": "patterns|apis|architecture|domain or null", '
         '"suggested_title": "knowledge entry title if adopt, else null"}'
     )

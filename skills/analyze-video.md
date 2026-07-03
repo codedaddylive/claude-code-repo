@@ -64,6 +64,14 @@ Encode it: python brain.py add --title "..." --category apis
 
 On `ADOPT`, run the printed `brain.py add` line to encode the decision into ARIA.
 
+Viability is judged application-agnostically by default. To bias it toward a
+specific project's stack, set `ARIA_STACK_CONTEXT`:
+
+```bash
+export ARIA_STACK_CONTEXT="Rust + Axum backend; judge fit for a high-throughput API."
+python cli.py viability-text --file notes.txt
+```
+
 ### 4a. Transcript-in (lightest path — no video, no Whisper)
 
 For "is this a viable dev improvement," the spoken transcript is the whole
