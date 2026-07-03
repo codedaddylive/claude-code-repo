@@ -199,38 +199,39 @@ python brain.py rebuild-index                   # regenerate index below
 ### Knowledge base index
 
 #### Patterns
-- **FastAPI endpoint patterns** — `knowledge/patterns/fastapi-endpoint.md`  tags: fastapi, python, api, routing
-- **Pydantic v2 model patterns** — `knowledge/patterns/pydantic-models.md`  tags: pydantic, python, validation, models
 - **Typer CLI patterns** — `knowledge/patterns/cli-typer.md`  tags: typer, cli, python
-- **mattpocock/skills — Structured Agent Skill Library** — `knowledge/patterns/mattpocock-skills-agent-prompt-library.md`  tags: claude-code, ai-agents, prompt-engineering, tdd, skills
+- **FastAPI endpoint patterns** — `knowledge/patterns/fastapi-endpoint.md`  tags: fastapi, python, api, routing
+- **hook-test** — `knowledge/patterns/hook-test.md`  tags:
+- **mattpocock/skills — Structured Agent Skill Library for Claude Code** — `knowledge/patterns/mattpocock-skills-agent-prompt-library.md`  tags: claude-code, ai-agents, prompt-engineering, tdd, developer-workflow, skills
 - **LLM Council — adversarial decision review** — `knowledge/patterns/llm-council-adversarial-decision-review.md`  tags: decision-making, multi-agent, squad, adversarial-review, judge-pattern
+- **Pydantic v2 model patterns** — `knowledge/patterns/pydantic-models.md`  tags: pydantic, python, validation, models
 
 #### Apis
 - **Anthropic Claude API usage** — `knowledge/apis/anthropic-claude.md`  tags: anthropic, claude, vision, ai, api
+- **NVIDIA LocateAnything-3B — Visual Grounding API** — `knowledge/apis/locate-anything.md`  tags: object-detection, visual-grounding, vision-language, bounding-box, video-pipeline, nvidia
 - **OpenAI Whisper (local) usage** — `knowledge/apis/whisper-transcription.md`  tags: whisper, transcription, audio, python
-- **NVIDIA LocateAnything-3B — Visual Grounding API** — `knowledge/apis/locate-anything.md`  tags: object-detection, visual-grounding, bounding-box, video-pipeline, nvidia
 
 #### Architecture
-- **Preferred project layout** — `knowledge/architecture/project-layout.md`  tags: structure, layout, python, project
-- **Video analysis pipeline architecture** — `knowledge/architecture/video-pipeline.md`  tags: architecture, pipeline, video, design
-- **OpenMontage: Agentic Video Production System** — `knowledge/architecture/openmontage-agentic-video-production.md`  tags: video-production, agentic-pipeline, ffmpeg, ai-orchestration
-- **DeerFlow: ByteDance Super Agent Harness** — `knowledge/architecture/deerflow-super-agent-harness.md`  tags: multi-agent, langgraph, orchestration, fastapi, sandboxed-execution
-- **HyperFrames: Deterministic HTML-to-MP4 Rendering** — `knowledge/architecture/hyperframes-html-to-video.md`  tags: video-rendering, html-to-video, typescript, animation, ci-cd
-- **Codebase Memory MCP** — `knowledge/architecture/codebase-memory-mcp.md`  tags: mcp, code-intelligence, knowledge-graph, tree-sitter
-- **GStack: Structured AI Workflow Framework** — `knowledge/architecture/gstack-ai-workflow-framework.md`  tags: ai-coding, claude-code, workflow, slash-commands, multi-agent
-- **SkillSpector: Security Scanner for AI Agent Skills** — `knowledge/architecture/skillspector-security-scanner.md`  tags: security, mcp, static-analysis, langgraph, supply-chain
-- **Palmier Pro: AI-Native Video Editor with MCP** — `knowledge/architecture/palmier-pro-ai-video-editor.md`  tags: mcp, swift, video-editing, macos, avfoundation
-- **Hermes Agent — Self-Improving Personal AI Agent** — `knowledge/architecture/hermes-agent-nous-research.md`  tags: ai-agent, self-improving, multi-platform, model-agnostic
-- **Voicebox: Local-First AI Voice Studio** — `knowledge/architecture/voicebox-local-ai-voice-studio.md`  tags: voice-cloning, tts, local-first, tauri, mcp
-- **Squad: Multi-Agent AI Coordination** — `knowledge/architecture/squad-multi-agent.md`  tags: multi-agent, coordination, sqlite, cli, claude-code, gemini
-- **Autonomous Loop Engineering** — `knowledge/architecture/autonomous-loop-engineering.md`  tags: autonomous-loops, agent-engineering, triggers, goal-based, proactive
 - **ARIA scope: application-agnostic development brain** — `knowledge/architecture/aria-scope-application-agnostic-development-brain.md`  tags: aria, scope, knowledge-base, cross-application, governance
+- **Autonomous Loop Engineering — Claude Code Patterns** — `knowledge/architecture/autonomous-loop-engineering.md`  tags: autonomous-loops, agent-engineering, claude-code, triggers, goal-based, proactive
+- **Codebase Memory MCP — Persistent Knowledge Graph for AI Coding Agents** — `knowledge/architecture/codebase-memory-mcp.md`  tags: mcp, code-intelligence, knowledge-graph, static-analysis, ai-agents, tree-sitter
+- **DeerFlow: ByteDance Super Agent Harness** — `knowledge/architecture/deerflow-super-agent-harness.md`  tags: multi-agent, langchain, langgraph, orchestration, fastapi, sandboxed-execution
+- **GStack: Structured AI Workflow Framework for Claude Code** — `knowledge/architecture/gstack-ai-workflow-framework.md`  tags: ai-coding, claude-code, workflow, slash-commands, developer-tooling, multi-agent
+- **Hermes Agent — Self-Improving Personal AI Agent (Nous Research)** — `knowledge/architecture/hermes-agent-nous-research.md`  tags: ai-agent, self-improving, multi-platform, python, model-agnostic, open-source
+- **HyperFrames: Deterministic HTML-to-MP4 Video Rendering** — `knowledge/architecture/hyperframes-html-to-video.md`  tags: video-rendering, html-to-video, typescript, animation, headless-browser, ci-cd
+- **OpenMontage: Agentic Video Production System** — `knowledge/architecture/openmontage-agentic-video-production.md`  tags: video-production, agentic-pipeline, ffmpeg, ai-orchestration, open-source, python
+- **Palmier Pro: AI-Native Video Editor with Embedded MCP Server** — `knowledge/architecture/palmier-pro-ai-video-editor.md`  tags: mcp, swift, video-editing, ai-agents, macos, avfoundation
+- **Preferred project layout** — `knowledge/architecture/project-layout.md`  tags: structure, layout, python, project
+- **SkillSpector: Security Scanner for AI Agent Skills and MCP Servers** — `knowledge/architecture/skillspector-security-scanner.md`  tags: security, mcp, ai-agents, static-analysis, langgraph, supply-chain
+- **Squad: Multi-Agent AI Coordination** — `knowledge/architecture/squad-multi-agent.md`  tags: multi-agent, coordination, sqlite, cli, claude-code, gemini, codex
+- **Video analysis pipeline architecture** — `knowledge/architecture/video-pipeline.md`  tags: architecture, pipeline, video, design
+- **Voicebox: Local-First AI Voice Studio** — `knowledge/architecture/voicebox-local-ai-voice-studio.md`  tags: voice-cloning, tts, local-first, tauri, mcp, open-source
 - **agent-reach — internet research & sentiment capability** — `knowledge/architecture/agent-reach-internet-research-sentiment-capability.md`  tags: agent-reach, internet-research, sentiment, multi-platform, research
 
 #### Domain
+- **Anthropic Cybersecurity Skills — Structured Security Competency Library for AI Agents** — `knowledge/domain/anthropic-cybersecurity-skills.md`  tags: cybersecurity, agent-skills, mitre-attack, ai-agents, security-workflows, knowledge-base
+- **Unlimited OCR (baidu/Unlimited-OCR) — Single-Pass Long-Document Parsing** — `knowledge/domain/unlimited-ocr-baidu.md`  tags: ocr, document-parsing, vlm, sglang, pdf, baidu
 - **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts
-- **Anthropic Cybersecurity Skills Library** — `knowledge/domain/anthropic-cybersecurity-skills.md`  tags: cybersecurity, agent-skills, mitre-attack, security-workflows
-- **Unlimited OCR — Single-Pass Long-Document Parsing** — `knowledge/domain/unlimited-ocr-baidu.md`  tags: ocr, document-parsing, vlm, sglang, pdf
 
 ## Squad Collaboration
 
