@@ -135,6 +135,12 @@ The `find-skills` skill is already installed — ask "find a skill for X" and it
 
 ## ARIA — Adaptive Reasoning Intelligence Archive
 
+**ARIA is an application-agnostic development brain — not tied to the video platform.**
+It stores settled decisions, patterns, and domain knowledge for *any* project. The video
+analysis tool is ARIA's first and reference client, which is why the current knowledge base
+skews video; new applications add their own entries alongside it. Treat ARIA as the primary
+system and each app as a consumer of it.
+
 **Invoke ARIA by name.** When you say "ARIA, build this" or "ARIA, create this", consult
 the knowledge base below first, then implement using the settled patterns and decisions it encodes.
 

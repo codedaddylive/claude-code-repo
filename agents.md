@@ -7,13 +7,12 @@
 ## Project & Business Goals
 
 **What I'm building:**
-A video intelligence platform with two interlocking systems:
 
-1. **Video Analysis Tool** — downloads/analyzes videos from YouTube, direct URLs, or local files using Claude vision + Whisper transcription. Produces structured JSON with keyframe descriptions, object detection, and full transcripts.
+**ARIA (Adaptive Reasoning Intelligence Archive)** — a self-growing, **application-agnostic development brain** (`brain.py` + `knowledge/`) that stores settled architectural decisions, API patterns, and domain knowledge for **any project I work on, not just one app**. Every agent session checks ARIA before implementing anything, across every codebase.
 
-2. **ARIA (Adaptive Reasoning Intelligence Archive)** — a self-growing knowledge brain (`brain.py` + `knowledge/`) that stores settled architectural decisions, API patterns, and domain knowledge. Every agent session should check ARIA before implementing anything.
+ARIA is the primary system. Individual applications are *clients* of the brain — the first and reference application is the **Video Analysis Tool** (downloads/analyzes videos from YouTube, direct URLs, or local files using Claude vision + Whisper), which is why much of the current knowledge base is video-flavored. New applications add their own patterns/apis/architecture/domain entries alongside it; nothing about ARIA itself is video-specific.
 
-**Business goal:** Reduce the cost of repeated research and implementation by encoding decisions once and reusing them across agents and sessions.
+**Business goal:** Reduce the cost of repeated research and implementation by encoding decisions once and reusing them across agents, sessions, **and applications**.
 
 ---
 
