@@ -4,7 +4,17 @@
 
 ---
 
-## Architecture
+## What ARIA Is (scope)
+
+ARIA is an **application-agnostic development brain** (`brain.py` + `knowledge/`) — it captures
+settled decisions, patterns, and domain knowledge for *any* project, not just the video tool.
+The **Video Analysis Tool** below is ARIA's first and reference client; its architecture is
+documented here because it's the initial app, not because ARIA is limited to it. As new
+applications are built, they contribute their own `knowledge/` entries alongside the video ones.
+
+---
+
+## Architecture (reference application: Video Analysis Tool)
 
 ```
 Input (URL / local file)

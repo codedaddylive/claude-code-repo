@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import fnmatch
+import os
 import re
 import shutil
 import tempfile
@@ -13,6 +15,7 @@ from .models import DownloadError, VideoSource
 
 _YTDLP_DOMAINS = re.compile(
     r"(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|twitter\.com|"
+    r"(?<!\w)x\.com|"
     r"instagram\.com|dailymotion\.com|twitch\.tv|facebook\.com)"
 )
 
@@ -31,23 +34,23 @@ def resolve_source(raw: str) -> VideoSource:
     return VideoSource(raw=raw, is_local=False)
 
 
-def download_video(source: VideoSource, output_dir: Path) -> Path:
+def download_video(source: VideoSource, output_dir: Path, cookies_file: Optional[Path] = None) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if source.is_local and source.local_path:
         return _copy_local_file(source.local_path, output_dir)
 
     if _YTDLP_DOMAINS.search(source.raw):
-        return _download_with_ytdlp(source.raw, output_dir)
+        return _download_with_ytdlp(source.raw, output_dir, cookies_file)
 
     # Try direct URL download; fall back to yt-dlp if Content-Type is not video
     try:
         return _download_direct_url(source.raw, output_dir)
     except DownloadError:
-        return _download_with_ytdlp(source.raw, output_dir)
+        return _download_with_ytdlp(source.raw, output_dir, cookies_file)
 
 
-def _download_with_ytdlp(url: str, output_dir: Path) -> Path:
+def _download_with_ytdlp(url: str, output_dir: Path, cookies_file: Optional[Path] = None) -> Path:
     ydl_opts = {
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
         "outtmpl": str(output_dir / "%(id)s.%(ext)s"),
@@ -55,6 +58,8 @@ def _download_with_ytdlp(url: str, output_dir: Path) -> Path:
         "no_warnings": True,
         "merge_output_format": "mp4",
     }
+    if cookies_file:
+        ydl_opts["cookiefile"] = str(cookies_file)
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
@@ -87,6 +92,42 @@ def _download_direct_url(url: str, output_dir: Path) -> Path:
                     fh.write(chunk)
     except httpx.HTTPError as e:
         raise DownloadError(f"HTTP error downloading '{url}': {e}") from e
+    return out_path
+
+
+def download_github_release_asset(
+    repo: str, tag: str, output_dir: Path, pattern: str = "*.mp4", token: Optional[str] = None
+) -> Path:
+    """Fetch a release asset from GitHub (an allowed host) instead of a blocked video host."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    token = token or os.getenv("GITHUB_TOKEN")
+    headers = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    meta_url = f"https://api.github.com/repos/{repo}/releases/tags/{tag}"
+    try:
+        r = httpx.get(meta_url, headers=headers, timeout=30.0, follow_redirects=True)
+        r.raise_for_status()
+    except httpx.HTTPError as e:
+        raise DownloadError(f"Could not read release '{tag}' from {repo}: {e}") from e
+
+    assets = r.json().get("assets", [])
+    match = next((a for a in assets if fnmatch.fnmatch(a["name"], pattern)), None)
+    if not match:
+        names = ", ".join(a["name"] for a in assets) or "(none)"
+        raise DownloadError(f"No asset matching '{pattern}' in {repo}@{tag}. Available: {names}")
+
+    out_path = output_dir / match["name"]
+    dl_headers = {**headers, "Accept": "application/octet-stream"}
+    try:
+        with httpx.stream("GET", match["url"], headers=dl_headers, follow_redirects=True, timeout=300.0) as resp:
+            resp.raise_for_status()
+            with out_path.open("wb") as fh:
+                for chunk in resp.iter_bytes(chunk_size=65536):
+                    fh.write(chunk)
+    except httpx.HTTPError as e:
+        raise DownloadError(f"Failed downloading asset '{match['name']}': {e}") from e
     return out_path
 
 

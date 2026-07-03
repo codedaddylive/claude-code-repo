@@ -146,6 +146,12 @@ The `find-skills` skill is already installed — ask "find a skill for X" and it
 
 ## ARIA — Adaptive Reasoning Intelligence Archive
 
+**ARIA is an application-agnostic development brain — not tied to the video platform.**
+It stores settled decisions, patterns, and domain knowledge for *any* project. The video
+analysis tool is ARIA's first and reference client, which is why the current knowledge base
+skews video; new applications add their own entries alongside it. Treat ARIA as the primary
+system and each app as a consumer of it.
+
 **Invoke ARIA by name.** When you say "ARIA, build this" or "ARIA, create this", consult
 the knowledge base below first, then implement using the settled patterns and decisions it encodes.
 
@@ -216,6 +222,7 @@ python brain.py rebuild-index                   # regenerate index below
 - **Hermes Agent — Self-Improving Personal AI Agent** — `knowledge/architecture/hermes-agent-nous-research.md`  tags: ai-agent, self-improving, multi-platform, model-agnostic
 - **Voicebox: Local-First AI Voice Studio** — `knowledge/architecture/voicebox-local-ai-voice-studio.md`  tags: voice-cloning, tts, local-first, tauri, mcp
 - **Squad: Multi-Agent AI Coordination** — `knowledge/architecture/squad-multi-agent.md`  tags: multi-agent, coordination, sqlite, cli, claude-code, gemini
+- **Autonomous Loop Engineering** — `knowledge/architecture/autonomous-loop-engineering.md`  tags: autonomous-loops, agent-engineering, triggers, goal-based, proactive
 
 #### Domain
 - **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts

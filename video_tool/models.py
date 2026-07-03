@@ -67,6 +67,22 @@ class AnalysisResult(BaseModel):
     raw_claude_responses: list[str] = []
 
 
+class ViabilityVerdict(str, Enum):
+    ADOPT = "adopt"
+    INVESTIGATE = "investigate"
+    SKIP = "skip"
+
+
+class ViabilityAssessment(BaseModel):
+    source: str
+    verdict: ViabilityVerdict
+    confidence: float
+    reasoning: str
+    relevant_to_stack: list[str] = []
+    suggested_category: Optional[str] = None
+    suggested_title: Optional[str] = None
+
+
 class AnalyzeRequest(BaseModel):
     url: str
     analysis_types: list[AnalysisType] = [AnalysisType.FULL]
