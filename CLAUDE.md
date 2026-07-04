@@ -192,6 +192,7 @@ python brain.py rebuild-index                   # regenerate index below
 - **Pydantic v2 model patterns** — `knowledge/patterns/pydantic-models.md`  tags: pydantic, python, validation, models
 - **Typer CLI patterns** — `knowledge/patterns/cli-typer.md`  tags: typer, cli, python
 - **mattpocock/skills — Structured Agent Skill Library** — `knowledge/patterns/mattpocock-skills-agent-prompt-library.md`  tags: claude-code, ai-agents, prompt-engineering, tdd, skills
+- **LLM Council — adversarial decision review** — `knowledge/patterns/llm-council-adversarial-decision-review.md`  tags: decision-making, multi-agent, squad, adversarial-review, judge-pattern
 
 #### Apis
 - **Anthropic Claude API usage** — `knowledge/apis/anthropic-claude.md`  tags: anthropic, claude, vision, ai, api
@@ -212,6 +213,8 @@ python brain.py rebuild-index                   # regenerate index below
 - **Voicebox: Local-First AI Voice Studio** — `knowledge/architecture/voicebox-local-ai-voice-studio.md`  tags: voice-cloning, tts, local-first, tauri, mcp
 - **Squad: Multi-Agent AI Coordination** — `knowledge/architecture/squad-multi-agent.md`  tags: multi-agent, coordination, sqlite, cli, claude-code, gemini
 - **Autonomous Loop Engineering** — `knowledge/architecture/autonomous-loop-engineering.md`  tags: autonomous-loops, agent-engineering, triggers, goal-based, proactive
+- **ARIA scope: application-agnostic development brain** — `knowledge/architecture/aria-scope-application-agnostic-development-brain.md`  tags: aria, scope, knowledge-base, cross-application, governance
+- **agent-reach — internet research & sentiment capability** — `knowledge/architecture/agent-reach-internet-research-sentiment-capability.md`  tags: agent-reach, internet-research, sentiment, multi-platform, research
 
 #### Domain
 - **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts
