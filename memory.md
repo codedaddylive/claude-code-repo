@@ -54,3 +54,4 @@
 - [2026-06-29] Remotion needs `chromium_headless_shell` binary, not regular Chrome — old headless mode was removed from standard Chromium
 - [2026-06-29] ffmpeg `image2pipe` demuxer requires explicit `-vcodec mjpeg` before `-i pipe:0` when piping JPEGs
 - [2026-06-29] Squad is from `github.com/mco-org/squad` — SQLite-based, not cloud-dependent
+- [2026-07-04] Run the `llm-council` skill PROACTIVELY (without being asked) before any consequential AND hard-to-reverse decision (dependency/architecture/API/vendor/feature commit). Judge must be a SEPARATE agent/fresh context — never self-grade. Routine/reversible work stays "recommend, don't over-plan".
