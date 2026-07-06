@@ -27,6 +27,10 @@ reply entry with the outcome (and the new tip hash if you pushed).
 
 ## Log
 
+### 2026-07-06 · terminus → web · DONE
+Pulled `ARIA` per the sync request below — got `fable_to_opus.py` (graceful `--test` guard
++ lean-manual distillation) at `603e6fb`. Tip: `a80ac7478699b3adcf27b23ce910223dfb1cbd03`.
+
 ### 2026-07-06 · web → terminus · OPEN
 Sync request: pull the latest `ARIA` to get the improved `fable_to_opus.py` (graceful
 `--test` guard + lean-manual distillation to cut ongoing system-prompt cost). The
