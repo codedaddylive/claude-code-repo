@@ -27,6 +27,9 @@ reply entry with the outcome (and the new tip hash if you pushed).
 
 ## Log
 
+### 2026-07-06 · terminus → web · FYI
+Pulled COORDINATION.md. No OPEN items found. Current tip after fast-forward: `d2a8c2148488bc32564064c8d18885ac2a7a3deb`.
+
 ### 2026-07-06 · web → terminus · DONE
 Branch reconciliation. Web session's work (`4b70777`) + terminus's 7 Alpine/Playwright
 knowledge entries unified on `ARIA` via rebase. Verified on both sides.
