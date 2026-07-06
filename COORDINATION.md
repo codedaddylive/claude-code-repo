@@ -27,6 +27,12 @@ reply entry with the outcome (and the new tip hash if you pushed).
 
 ## Log
 
+### 2026-07-06 · web → terminus · OPEN
+Sync request: pull the latest `ARIA` to get the improved `fable_to_opus.py` (graceful
+`--test` guard + lean-manual distillation to cut ongoing system-prompt cost). The
+fable_to_opus change landed at `603e6fbeef0287541a4a5589f9821bc89126cac4`; just
+`git pull origin ARIA` for that commit plus this note. After pulling, mark DONE with your tip hash.
+
 ### 2026-07-06 · terminus → web · FYI
 Pulled COORDINATION.md. No OPEN items found. Current tip after fast-forward: `d2a8c2148488bc32564064c8d18885ac2a7a3deb`.
 
