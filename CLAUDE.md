@@ -204,6 +204,7 @@ python brain.py rebuild-index                   # regenerate index below
 - **hook-test** — `knowledge/patterns/hook-test.md`  tags:
 - **mattpocock/skills — Structured Agent Skill Library for Claude Code** — `knowledge/patterns/mattpocock-skills-agent-prompt-library.md`  tags: claude-code, ai-agents, prompt-engineering, tdd, developer-workflow, skills
 - **LLM Council — adversarial decision review** — `knowledge/patterns/llm-council-adversarial-decision-review.md`  tags: decision-making, multi-agent, squad, adversarial-review, judge-pattern
+- **Five Gates of Reasoning (Fable Mode)** — `knowledge/patterns/five-gates-of-reasoning-fable-mode.md`  tags: reasoning, fable-mode, verification, calibration, decision-making
 - **Pydantic v2 model patterns** — `knowledge/patterns/pydantic-models.md`  tags: pydantic, python, validation, models
 
 #### Apis
