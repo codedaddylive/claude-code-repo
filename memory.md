@@ -55,3 +55,4 @@
 - [2026-06-29] ffmpeg `image2pipe` demuxer requires explicit `-vcodec mjpeg` before `-i pipe:0` when piping JPEGs
 - [2026-06-29] Squad is from `github.com/mco-org/squad` — SQLite-based, not cloud-dependent
 - [2026-07-04] Run the `llm-council` skill PROACTIVELY (without being asked) before any consequential AND hard-to-reverse decision (dependency/architecture/API/vendor/feature commit). Judge must be a SEPARATE agent/fresh context — never self-grade. Routine/reversible work stays "recommend, don't over-plan".
+- [2026-07-07] Before judging a factual/research claim as false or confabulated, CROSS-REFERENCE with WebSearch to validate. WebSearch routes through Anthropic's backend and works even when direct WebFetch is blocked by the network policy. Don't rely on training-memory skepticism alone — verify, then conclude. (Learned after wrongly suspecting Anthropic's real "J-space" research was confabulated.)

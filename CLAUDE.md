@@ -233,6 +233,7 @@ python brain.py rebuild-index                   # regenerate index below
 - **Anthropic Cybersecurity Skills — Structured Security Competency Library for AI Agents** — `knowledge/domain/anthropic-cybersecurity-skills.md`  tags: cybersecurity, agent-skills, mitre-attack, ai-agents, security-workflows, knowledge-base
 - **Unlimited OCR (baidu/Unlimited-OCR) — Single-Pass Long-Document Parsing** — `knowledge/domain/unlimited-ocr-baidu.md`  tags: ocr, document-parsing, vlm, sglang, pdf, baidu
 - **Video analysis domain concepts** — `knowledge/domain/video-analysis-concepts.md`  tags: video, analysis, domain, concepts
+- **J-space / global workspace — models reason in opaque internal activations** — `knowledge/domain/j-space-global-workspace-models-reason-in-opaque-internal-activations.md`  tags: interpretability, verification, safety, hidden-goals, separate-judge
 
 ## Squad Collaboration
 
