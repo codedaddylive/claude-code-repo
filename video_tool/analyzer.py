@@ -15,10 +15,24 @@ from .models import (
     FrameInfo,
     ObjectDetectionResult,
     TranscriptionResult,
+    ViabilityAssessment,
+    ViabilityVerdict,
 )
 
 MODEL = "claude-sonnet-4-6"
 MAX_FRAMES_PER_CALL = 10
+
+DEFAULT_STACK_CONTEXT = (
+    "A development team whose knowledge base (ARIA) spans multiple applications. "
+    "Preferred stack when relevant: Python 3.11+, FastAPI, Typer, Pydantic v2, "
+    "Anthropic Claude API, Squad (SQLite multi-agent). Judge fit against general "
+    "software-engineering value and reuse, not any single product domain."
+)
+
+
+def stack_context() -> str:
+    """Project context for viability judgments. Override per-project via ARIA_STACK_CONTEXT."""
+    return os.getenv("ARIA_STACK_CONTEXT") or DEFAULT_STACK_CONTEXT
 
 
 def get_client() -> anthropic.Anthropic:
@@ -167,6 +181,46 @@ def run_analysis(
     return result
 
 
+def assess_viability(source: str, content: str) -> ViabilityAssessment:
+    client = get_client()
+    prompt = (
+        "You evaluate whether a tool, technique, or idea is a viable DEVELOPMENT IMPROVEMENT "
+        f"for this team:\n{stack_context()}\n\n"
+        f"Source: {source}\n\n"
+        f"Content (transcript / summary / notes):\n{content[:12000]}\n\n"
+        "Decide one verdict:\n"
+        "- adopt: clearly worth integrating; reusable and adds real engineering value\n"
+        "- investigate: promising but needs a spike or has open questions\n"
+        "- skip: low value, or redundant with what already exists\n"
+        "Do NOT penalize an idea merely for being outside any single product domain.\n\n"
+        "Respond ONLY with a JSON object, no other text:\n"
+        '{"verdict": "adopt|investigate|skip", "confidence": 0.0-1.0, '
+        '"reasoning": "2-3 sentences on engineering value and reuse", '
+        '"relevant_to_stack": ["component or area", ...], '
+        '"suggested_category": "patterns|apis|architecture|domain or null", '
+        '"suggested_title": "knowledge entry title if adopt, else null"}'
+    )
+    try:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        data = _parse_json_object(response.content[0].text)
+    except anthropic.APIError as e:
+        raise AnalysisError(f"Claude API error during viability assessment: {e}") from e
+
+    return ViabilityAssessment(
+        source=source,
+        verdict=ViabilityVerdict(data.get("verdict", "investigate")),
+        confidence=float(data.get("confidence", 0.5)),
+        reasoning=data.get("reasoning", ""),
+        relevant_to_stack=data.get("relevant_to_stack", []),
+        suggested_category=data.get("suggested_category") or None,
+        suggested_title=data.get("suggested_title") or None,
+    )
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def _build_image_blocks(frames: list[FrameInfo]) -> list[dict]:
@@ -200,6 +254,17 @@ def _parse_numbered_lines(text: str, expected: int) -> list[str]:
     while len(descriptions) < expected:
         descriptions.append("")
     return descriptions[:expected]
+
+
+def _parse_json_object(text: str) -> dict:
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end == 0:
+        return {}
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        return {}
 
 
 def _parse_json_array(text: str) -> list[dict]:

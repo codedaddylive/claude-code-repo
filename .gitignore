@@ -14,3 +14,6 @@ build/
 *.mov
 *.webm
 frames/
+.squad/sessions/
+.squad/messages.db
+.squad/

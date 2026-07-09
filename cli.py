@@ -10,8 +10,9 @@ import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from video_tool.analyzer import run_analysis
-from video_tool.downloader import download_video, resolve_source
+from video_tool.analyzer import assess_viability, generate_visual_summary, get_client, run_analysis
+from video_tool.analyzer import encode_frame
+from video_tool.downloader import download_github_release_asset, download_video, resolve_source
 from video_tool.extractor import extract_audio, extract_frames, get_video_duration
 from video_tool.models import AnalysisType, AnalyzeRequest, FrameSamplingStrategy
 from video_tool.transcriber import transcribe
@@ -173,6 +174,132 @@ def cmd_transcribe(
         except Exception as e:
             console.print(f"[red]Error:[/red] {e}")
             raise typer.Exit(code=1)
+
+
+@app.command("viability")
+def cmd_viability(
+    source: str = typer.Argument(..., help="Video link (YouTube, Twitter/X, direct URL) or local file"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save verdict JSON to file"),
+    whisper_model: str = typer.Option("base", "--whisper-model", "-w", help="Whisper model size"),
+    cookies: Optional[Path] = typer.Option(None, "--cookies", help="Cookies file for auth-walled links (Twitter/X)"),
+    max_frames: int = typer.Option(8, "--max-frames", "-m", help="Frames for visual fallback if no audio"),
+):
+    """Ingest a link and judge whether it's a viable development improvement."""
+    with tempfile.TemporaryDirectory(prefix="video_tool_") as tmpdir:
+        tmp = Path(tmpdir)
+        try:
+            with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
+                task = progress.add_task("Resolving source...", total=None)
+                src = resolve_source(source)
+                progress.update(task, description="Downloading...")
+                video_path = download_video(src, tmp / "download", cookies_file=cookies)
+                assessment = _assess_video(video_path, source, tmp, whisper_model, max_frames, progress, task)
+
+            _finish_verdict(assessment, output)
+
+        except Exception as e:
+            msg = str(e)
+            console.print(f"[red]Error:[/red] {msg}")
+            if _looks_like_youtube(source) and ("403" in msg or "Forbidden" in msg or "Sign in" in msg):
+                console.print(
+                    "[yellow]YouTube blocks datacenter IPs. Run on an open network, pass --cookies, "
+                    "or use 'viability-release' to analyze a file staged on GitHub.[/yellow]"
+                )
+            raise typer.Exit(code=1)
+
+
+@app.command("viability-release")
+def cmd_viability_release(
+    repo: str = typer.Argument(..., help="owner/repo hosting the release (e.g. codedaddylive/claude-code-repo)"),
+    tag: str = typer.Argument(..., help="Release tag holding the video asset"),
+    pattern: str = typer.Option("*.mp4", "--pattern", "-p", help="Asset filename glob to match"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save verdict JSON to file"),
+    whisper_model: str = typer.Option("base", "--whisper-model", "-w", help="Whisper model size"),
+    max_frames: int = typer.Option(8, "--max-frames", "-m", help="Frames for visual fallback if no audio"),
+):
+    """Judge viability of a video staged as a GitHub release asset (bypasses blocked video hosts)."""
+    with tempfile.TemporaryDirectory(prefix="video_tool_") as tmpdir:
+        tmp = Path(tmpdir)
+        try:
+            with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
+                task = progress.add_task(f"Fetching {pattern} from {repo}@{tag}...", total=None)
+                video_path = download_github_release_asset(repo, tag, tmp / "download", pattern=pattern)
+                label = f"{repo}@{tag}:{video_path.name}"
+                assessment = _assess_video(video_path, label, tmp, whisper_model, max_frames, progress, task)
+
+            _finish_verdict(assessment, output)
+
+        except Exception as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(code=1)
+
+
+@app.command("viability-text")
+def cmd_viability_text(
+    file: Optional[Path] = typer.Option(None, "--file", "-f", help="Transcript/notes file; omit to read stdin"),
+    source: str = typer.Option("pasted-text", "--source", "-s", help="Label for the source (e.g. the video URL)"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save verdict JSON to file"),
+):
+    """Judge viability from a transcript or notes — no download, no Whisper. Works under any policy that allows the Claude API."""
+    content = file.read_text() if file else typer.get_text_stream("stdin").read()
+    if not content.strip():
+        console.print("[red]Error:[/red] no text provided (pass --file or pipe via stdin)")
+        raise typer.Exit(code=1)
+    try:
+        with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as progress:
+            progress.add_task("Assessing viability...", total=None)
+            assessment = assess_viability(source, content)
+        _finish_verdict(assessment, output)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1)
+
+
+def _assess_video(video_path, source_label, tmp, whisper_model, max_frames, progress, task):
+    progress.update(task, description="Extracting audio...")
+    audio_path = extract_audio(video_path, tmp / "audio.wav")
+
+    content = ""
+    if audio_path:
+        progress.update(task, description="Transcribing (this may take a moment)...")
+        transcription = transcribe(audio_path, model_name=whisper_model)
+        if transcription and transcription.full_text.strip():
+            content = transcription.full_text
+
+    if not content:
+        progress.update(task, description="No usable audio — summarizing visually...")
+        frames = extract_frames(video_path, tmp / "frames", max_frames=max_frames)
+        encoded = [encode_frame(f) for f in frames]
+        content = generate_visual_summary(get_client(), encoded)
+
+    progress.update(task, description="Assessing viability...")
+    return assess_viability(source_label, content)
+
+
+def _finish_verdict(assessment, output: Optional[Path]) -> None:
+    _print_verdict(assessment)
+    if output:
+        output.write_text(assessment.model_dump_json(indent=2))
+        console.print(f"[green]Verdict saved to {output}[/green]")
+
+
+def _looks_like_youtube(source: str) -> bool:
+    return "youtube.com" in source or "youtu.be" in source
+
+
+def _print_verdict(a) -> None:
+    colors = {"adopt": "green", "investigate": "yellow", "skip": "red"}
+    color = colors.get(a.verdict.value, "white")
+    console.print(f"\n[bold {color}]VERDICT: {a.verdict.value.upper()}[/bold {color}]  (confidence {a.confidence:.0%})")
+    console.print(f"[bold]Source:[/bold] {a.source}")
+    console.print(f"[bold]Reasoning:[/bold] {a.reasoning}")
+    if a.relevant_to_stack:
+        console.print(f"[bold]Touches:[/bold] {', '.join(a.relevant_to_stack)}")
+    if a.verdict.value == "adopt" and a.suggested_title:
+        console.print(
+            f"[bold]Encode it:[/bold] python brain.py add "
+            f"--title \"{a.suggested_title}\" --category {a.suggested_category or 'architecture'}"
+        )
 
 
 if __name__ == "__main__":
