@@ -215,6 +215,7 @@ python brain.py rebuild-index                   # regenerate index below
 #### Architecture
 - **ARIA scope: application-agnostic development brain** — `knowledge/architecture/aria-scope-application-agnostic-development-brain.md`  tags: aria, scope, knowledge-base, cross-application, governance
 - **Autonomous Loop Engineering — Claude Code Patterns** — `knowledge/architecture/autonomous-loop-engineering.md`  tags: autonomous-loops, agent-engineering, claude-code, triggers, goal-based, proactive
+- **Cross-session agent coordination: git bus vs. Mosaic** — `knowledge/architecture/cross-session-agent-coordination-git-bus-vs-mosaic.md`  tags: multi-agent, coordination, git, mosaic, cross-session, async
 - **Codebase Memory MCP — Persistent Knowledge Graph for AI Coding Agents** — `knowledge/architecture/codebase-memory-mcp.md`  tags: mcp, code-intelligence, knowledge-graph, static-analysis, ai-agents, tree-sitter
 - **DeerFlow: ByteDance Super Agent Harness** — `knowledge/architecture/deerflow-super-agent-harness.md`  tags: multi-agent, langchain, langgraph, orchestration, fastapi, sandboxed-execution
 - **GStack: Structured AI Workflow Framework for Claude Code** — `knowledge/architecture/gstack-ai-workflow-framework.md`  tags: ai-coding, claude-code, workflow, slash-commands, developer-tooling, multi-agent
