@@ -1,0 +1,8 @@
+name: dev
+roles:
+  inspector:
+    prompt_file: inspector
+  manager:
+    prompt_file: manager
+  worker:
+    prompt_file: worker
