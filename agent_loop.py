@@ -23,6 +23,7 @@ Usage:
 
     # CLI:
     #   python agent_loop.py "Refine a one-paragraph summary of this repo." --model gemini
+    #   python agent_loop.py "Explain event loops." --model grok
     #   python agent_loop.py "Design a caching layer." --dual   # Claude proposes, Gemini critiques
 """
 from __future__ import annotations
@@ -169,6 +170,16 @@ def gemini_responder(model: str | None = None) -> Responder:
     return _respond
 
 
+def grok_responder(model: str | None = None) -> Responder:
+    """Responder backed by grok_interaction.get_grok_response."""
+    from grok_interaction import get_grok_response
+
+    def _respond(prompt: str) -> str:
+        return get_grok_response(prompt, model=model)
+
+    return _respond
+
+
 def claude_responder(model: str = "claude-sonnet-4-6") -> Responder:
     """Responder backed by the Anthropic Messages API."""
     def _respond(prompt: str) -> str:
@@ -196,7 +207,9 @@ def _resolve_responder(name: str) -> Responder:
         return gemini_responder()
     if name.startswith("claude"):
         return claude_responder()
-    raise ValueError(f"Unknown model '{name}'. Use 'gemini' or 'claude'.")
+    if name.startswith("grok"):
+        return grok_responder()
+    raise ValueError(f"Unknown model '{name}'. Use 'gemini', 'claude', or 'grok'.")
 
 
 if __name__ == "__main__":
