@@ -79,23 +79,23 @@ def test_pipeline_runs_all_roles_in_order():
     print("PASS: pipeline runs all 4 roles in order, final = optimizer output")
 
 
-def test_pipeline_per_role_models():
+def test_pipeline_per_role_responders():
     def make(tag):
         return lambda prompt: f"{tag}-said-something"
 
     responders = {
-        "Architect": make("claude"),
-        "Engineer": make("grok"),
-        "Reviewer": make("gemini"),
-        "Optimizer": make("claude"),
+        "Architect": make("a"),
+        "Engineer": make("b"),
+        "Reviewer": make("c"),
+        "Optimizer": make("d"),
     }
     result = run_pipeline("task", responders=responders)
     outputs = {s["role"]: s["output"] for s in result.stages}
-    assert outputs["Architect"] == "claude-said-something"
-    assert outputs["Engineer"] == "grok-said-something"
-    assert outputs["Reviewer"] == "gemini-said-something"
-    assert result.final == "claude-said-something"
-    print("PASS: pipeline assigns a different model per role")
+    assert outputs["Architect"] == "a-said-something"
+    assert outputs["Engineer"] == "b-said-something"
+    assert outputs["Reviewer"] == "c-said-something"
+    assert result.final == "d-said-something"
+    print("PASS: pipeline assigns a different responder per role")
 
 
 def test_pipeline_transcript_accumulates():
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         test_respects_max_iterations,
         test_dual_loop_stops_on_approval,
         test_pipeline_runs_all_roles_in_order,
-        test_pipeline_per_role_models,
+        test_pipeline_per_role_responders,
         test_pipeline_transcript_accumulates,
         test_input_guards,
     ]

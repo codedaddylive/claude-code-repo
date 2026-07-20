@@ -9,9 +9,8 @@ task (build from scratch, refactor, debug, design, optimize, review, or build UI
 
 - Starting a non-trivial engineering task and want a senior-level framing
 - You want repeatable prompt quality instead of ad-hoc one-liners
-- Driving one of the model clients in this repo (`video_tool/analyzer.py` for
-  Claude, `gemini_interaction.py`, `grok_interaction.py`) or the loop harness
-  (`agent_loop.py`)
+- Driving the repo's Claude client (`video_tool/analyzer.py`) or the loop
+  harness (`agent_loop.py`)
 
 Prompt #7 (Multi-Agent Workflow) is **implemented as code** in
 `agent_loop.run_pipeline` — see the note at the bottom.
@@ -62,25 +61,21 @@ Prompt #7 (Multi-Agent Workflow) is **implemented as code** in
 ## Prompt #7 is runnable in this repo
 
 `agent_loop.run_pipeline` implements the Architect → Engineer → Reviewer →
-Optimizer chain, with an optional different model per role:
+Optimizer chain. Each role can use a different responder via the `responders`
+map (all Claude by default):
 
 ```python
-from agent_loop import run_pipeline, claude_responder, gemini_responder, grok_responder
+from agent_loop import run_pipeline, claude_responder
 
 result = run_pipeline(
     "Build a token-bucket rate limiter with tests.",
-    responders={
-        "Architect": claude_responder(),
-        "Engineer":  grok_responder(),
-        "Reviewer":  gemini_responder(),
-        "Optimizer": claude_responder(),
-    },
+    responder=claude_responder(),
 )
 print(result.final)
 ```
 
-Or from the CLI (single model for all roles):
+Or from the CLI:
 
 ```bash
-python agent_loop.py "Build a token-bucket rate limiter." --pipeline --model claude
+python agent_loop.py "Build a token-bucket rate limiter." --pipeline
 ```

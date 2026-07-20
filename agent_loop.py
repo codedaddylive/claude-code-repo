@@ -3,33 +3,31 @@
 Technique applied from *"Stop Prompting. Start Looping."*: rather than sending a
 single prompt and accepting whatever comes back, run the model in a refine loop
 (generate -> self-check -> refine) and stop when the goal is met or an iteration
-budget is exhausted. A two-agent variant lets one model generate while another
-critiques — e.g. Claude proposes, Gemini reviews — which ties the loop into
-ARIA's multi-agent theme.
+budget is exhausted. A two-agent variant lets one responder generate while another
+critiques, which ties the loop into ARIA's multi-agent theme.
 
-The core (`run_loop` / `run_dual_loop`) is model-agnostic: it drives any
-``responder`` callable ``(str) -> str``. Default responders wire up the repo's
-Claude and Gemini clients, but you can pass a fake responder for offline testing.
+The core (`run_loop` / `run_dual_loop` / `run_pipeline`) is model-agnostic: it
+drives any ``responder`` callable ``(str) -> str``. The default responder wires up
+the repo's Claude client, but you can pass a fake responder for offline testing.
 
 Usage:
-    from agent_loop import run_loop, gemini_responder, claude_responder
+    from agent_loop import run_loop, claude_responder
 
     result = run_loop(
         "Write a regex that matches an ISO-8601 date, then verify it.",
-        responder=gemini_responder(),      # or claude_responder()
+        responder=claude_responder(),
         max_iterations=5,
     )
     print(result.final, f"({result.iterations} iterations, done={result.done})")
 
     # CLI:
-    #   python agent_loop.py "Refine a one-paragraph summary of this repo." --model gemini
-    #   python agent_loop.py "Explain event loops." --model grok
-    #   python agent_loop.py "Design a caching layer." --dual   # Claude proposes, Gemini critiques
-    #   python agent_loop.py "Build a rate limiter." --pipeline  # Architect->Engineer->Reviewer->Optimizer
+    #   python agent_loop.py "Refine a one-paragraph summary of this repo."
+    #   python agent_loop.py "Design a caching layer." --dual      # propose + critique
+    #   python agent_loop.py "Build a rate limiter." --pipeline    # Architect->Engineer->Reviewer->Optimizer
 
 Also implements prompt #7 ("Multi-Agent Workflow") from the 8-engineering-prompts
 thread via `run_pipeline`: a four-role Architect -> Engineer -> Reviewer ->
-Optimizer chain where each role can be a different model (Claude, Gemini, Grok).
+Optimizer chain where each role can use a different responder.
 """
 from __future__ import annotations
 
@@ -207,8 +205,7 @@ def run_pipeline(
         task: The engineering task to run through the pipeline.
         responder: Fallback responder used for any role not in ``responders``.
         responders: Optional ``{role_name: responder}`` map to assign a different
-            model per role — e.g. ``{"Architect": claude_responder(),
-            "Engineer": grok_responder(), "Reviewer": gemini_responder()}``.
+            responder per role.
         on_step: Optional callback ``(role, output)`` for progress.
 
     Returns:
@@ -240,27 +237,7 @@ def run_pipeline(
     return PipelineResult(final=final, stages=stages)
 
 
-# --- Default responders backed by the repo's clients -----------------------
-
-def gemini_responder(model: str | None = None) -> Responder:
-    """Responder backed by gemini_interaction.get_gemini_response."""
-    from gemini_interaction import get_gemini_response
-
-    def _respond(prompt: str) -> str:
-        return get_gemini_response(prompt, model=model)
-
-    return _respond
-
-
-def grok_responder(model: str | None = None) -> Responder:
-    """Responder backed by grok_interaction.get_grok_response."""
-    from grok_interaction import get_grok_response
-
-    def _respond(prompt: str) -> str:
-        return get_grok_response(prompt, model=model)
-
-    return _respond
-
+# --- Default responder backed by the repo's Claude client ------------------
 
 def claude_responder(model: str = "claude-sonnet-4-6") -> Responder:
     """Responder backed by the Anthropic Messages API."""
@@ -283,27 +260,14 @@ def claude_responder(model: str = "claude-sonnet-4-6") -> Responder:
     return _respond
 
 
-def _resolve_responder(name: str) -> Responder:
-    name = (name or "gemini").lower()
-    if name.startswith("gemini"):
-        return gemini_responder()
-    if name.startswith("claude"):
-        return claude_responder()
-    if name.startswith("grok"):
-        return grok_responder()
-    raise ValueError(f"Unknown model '{name}'. Use 'gemini', 'claude', or 'grok'.")
-
-
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:]]
     dual = "--dual" in args
     pipeline = "--pipeline" in args
     args = [a for a in args if a not in ("--dual", "--pipeline")]
 
-    model = "gemini"
     if "--model" in args:
         i = args.index("--model")
-        model = args[i + 1] if i + 1 < len(args) else model
         del args[i : i + 2]
 
     goal = " ".join(args) or "Write a haiku about iterating toward a goal."
@@ -315,24 +279,24 @@ if __name__ == "__main__":
 
     try:
         if pipeline:
-            print(f"Multi-agent pipeline (Architect->Engineer->Reviewer->Optimizer, {model}) — task: {goal}")
+            print(f"Multi-agent pipeline (Architect->Engineer->Reviewer->Optimizer) — task: {goal}")
             presult = run_pipeline(
-                goal, responder=_resolve_responder(model),
+                goal, responder=claude_responder(),
                 on_step=lambda role, out: print(f"\n--- {role} ---\n{out}"),
             )
             print(f"\n=== final ({len(presult.stages)} stages) ===")
             print(presult.final)
             sys.exit(0)
         if dual:
-            print(f"Dual loop (Claude proposes, Gemini critiques) — goal: {goal}")
+            print(f"Dual loop (propose + critique) — goal: {goal}")
             result = run_dual_loop(
-                goal, generator=claude_responder(), critic=gemini_responder(),
+                goal, generator=claude_responder(), critic=claude_responder(),
                 on_step=lambda s, prop, crit: _print(s, f"PROPOSAL:\n{prop}", f"CRITIQUE:\n{crit}"),
             )
         else:
-            print(f"Single loop ({model}) — goal: {goal}")
+            print(f"Single loop — goal: {goal}")
             result = run_loop(
-                goal, responder=_resolve_responder(model),
+                goal, responder=claude_responder(),
                 on_step=lambda s, resp: _print(s, resp),
             )
         print(f"\n=== done={result.done} after {result.iterations} iteration(s) ===")
