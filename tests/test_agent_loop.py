@@ -15,7 +15,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agent_loop import DONE_MARKER, run_dual_loop, run_loop  # noqa: E402
+from agent_loop import (  # noqa: E402
+    DONE_MARKER,
+    PIPELINE_ROLES,
+    run_dual_loop,
+    run_loop,
+    run_pipeline,
+)
 
 
 def test_stops_on_done_marker():
@@ -58,6 +64,54 @@ def test_dual_loop_stops_on_approval():
     print("PASS: dual loop stops when critic approves (2 iterations)")
 
 
+def test_pipeline_runs_all_roles_in_order():
+    calls = {"n": 0}
+
+    def responder(prompt):
+        calls["n"] += 1
+        return f"output-{calls['n']}"
+
+    result = run_pipeline("build a thing", responder=responder)
+    assert len(result.stages) == len(PIPELINE_ROLES) == 4
+    roles = [s["role"] for s in result.stages]
+    assert roles == ["Architect", "Engineer", "Reviewer", "Optimizer"], roles
+    assert result.final == "output-4", result.final
+    print("PASS: pipeline runs all 4 roles in order, final = optimizer output")
+
+
+def test_pipeline_per_role_models():
+    def make(tag):
+        return lambda prompt: f"{tag}-said-something"
+
+    responders = {
+        "Architect": make("claude"),
+        "Engineer": make("grok"),
+        "Reviewer": make("gemini"),
+        "Optimizer": make("claude"),
+    }
+    result = run_pipeline("task", responders=responders)
+    outputs = {s["role"]: s["output"] for s in result.stages}
+    assert outputs["Architect"] == "claude-said-something"
+    assert outputs["Engineer"] == "grok-said-something"
+    assert outputs["Reviewer"] == "gemini-said-something"
+    assert result.final == "claude-said-something"
+    print("PASS: pipeline assigns a different model per role")
+
+
+def test_pipeline_transcript_accumulates():
+    def responder(prompt):
+        return "X"
+
+    # Capture the prompt each role receives via on_step is not enough; inspect stages.
+    captured = []
+    run_pipeline("t", responder=lambda p: (captured.append(p) or "X"))
+    # Optimizer (4th) prompt must contain earlier role headers.
+    optimizer_prompt = captured[-1]
+    for role in ("Architect", "Engineer", "Reviewer"):
+        assert f"## {role}" in optimizer_prompt, f"{role} missing from optimizer context"
+    print("PASS: pipeline accumulates prior-role output into later prompts")
+
+
 def test_input_guards():
     for bad_goal in ("", "   "):
         try:
@@ -78,6 +132,9 @@ if __name__ == "__main__":
         test_stops_on_done_marker,
         test_respects_max_iterations,
         test_dual_loop_stops_on_approval,
+        test_pipeline_runs_all_roles_in_order,
+        test_pipeline_per_role_models,
+        test_pipeline_transcript_accumulates,
         test_input_guards,
     ]
     failed = 0

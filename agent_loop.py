@@ -25,6 +25,11 @@ Usage:
     #   python agent_loop.py "Refine a one-paragraph summary of this repo." --model gemini
     #   python agent_loop.py "Explain event loops." --model grok
     #   python agent_loop.py "Design a caching layer." --dual   # Claude proposes, Gemini critiques
+    #   python agent_loop.py "Build a rate limiter." --pipeline  # Architect->Engineer->Reviewer->Optimizer
+
+Also implements prompt #7 ("Multi-Agent Workflow") from the 8-engineering-prompts
+thread via `run_pipeline`: a four-role Architect -> Engineer -> Reviewer ->
+Optimizer chain where each role can be a different model (Claude, Gemini, Grok).
 """
 from __future__ import annotations
 
@@ -47,6 +52,35 @@ class LoopResult:
     iterations: int
     done: bool
     history: List[dict] = field(default_factory=list)
+
+
+@dataclass
+class PipelineResult:
+    """Outcome of a multi-agent pipeline run."""
+
+    final: str
+    stages: List[dict] = field(default_factory=list)
+
+
+# Roles for the Architect -> Engineer -> Reviewer -> Optimizer workflow (prompt #7
+# from the "8 engineering prompts" thread). Each role's instruction is combined
+# with the task and the accumulated output of prior roles.
+PIPELINE_ROLES: List[tuple] = [
+    ("Architect",
+     "You are a senior software architect. Design the architecture for the task: "
+     "components, data flow, key decisions, and trade-offs. Output a clear design "
+     "spec that an engineer can implement."),
+    ("Engineer",
+     "You are a senior software engineer. Implement the architecture below into "
+     "working, well-structured code. Follow the design faithfully."),
+    ("Reviewer",
+     "You are a meticulous code reviewer. Review the implementation below for "
+     "correctness, edge cases, security, and clarity. List concrete, actionable issues."),
+    ("Optimizer",
+     "You are a performance and quality optimizer. Using the implementation and the "
+     "review below, produce a final, polished version that resolves the review issues "
+     "and improves performance, readability, and robustness."),
+]
 
 
 def _refine_prompt(goal: str, previous: str | None, step: int, total: int) -> str:
@@ -158,6 +192,54 @@ def run_dual_loop(
     )
 
 
+def run_pipeline(
+    task: str,
+    responder: Responder | None = None,
+    responders: dict | None = None,
+    on_step: Callable[[str, str], None] | None = None,
+) -> PipelineResult:
+    """Multi-agent workflow (prompt #7): Architect -> Engineer -> Reviewer -> Optimizer.
+
+    Each role receives the task plus the accumulated output of all prior roles, so
+    the design flows into implementation, review, and finally optimization.
+
+    Parameters:
+        task: The engineering task to run through the pipeline.
+        responder: Fallback responder used for any role not in ``responders``.
+        responders: Optional ``{role_name: responder}`` map to assign a different
+            model per role — e.g. ``{"Architect": claude_responder(),
+            "Engineer": grok_responder(), "Reviewer": gemini_responder()}``.
+        on_step: Optional callback ``(role, output)`` for progress.
+
+    Returns:
+        PipelineResult with per-stage outputs and the final optimized answer.
+    """
+    if not task or not task.strip():
+        raise ValueError("task must be a non-empty string.")
+    responders = responders or {}
+    if responder is None and not responders:
+        raise ValueError("Provide `responder` and/or `responders`.")
+
+    stages: List[dict] = []
+    transcript = ""
+
+    for role, instruction in PIPELINE_ROLES:
+        role_responder = responders.get(role, responder)
+        if role_responder is None:
+            raise ValueError(f"No responder available for role '{role}'.")
+        prompt = f"{instruction}\n\nTASK: {task}"
+        if transcript:
+            prompt += f"\n\nWORK SO FAR:\n{transcript}"
+        output = role_responder(prompt)
+        stages.append({"role": role, "output": output})
+        if on_step:
+            on_step(role, output)
+        transcript += f"\n\n## {role}\n{output}"
+
+    final = stages[-1]["output"].strip() if stages else ""
+    return PipelineResult(final=final, stages=stages)
+
+
 # --- Default responders backed by the repo's clients -----------------------
 
 def gemini_responder(model: str | None = None) -> Responder:
@@ -215,7 +297,8 @@ def _resolve_responder(name: str) -> Responder:
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:]]
     dual = "--dual" in args
-    args = [a for a in args if a != "--dual"]
+    pipeline = "--pipeline" in args
+    args = [a for a in args if a not in ("--dual", "--pipeline")]
 
     model = "gemini"
     if "--model" in args:
@@ -231,6 +314,15 @@ if __name__ == "__main__":
             print(p)
 
     try:
+        if pipeline:
+            print(f"Multi-agent pipeline (Architect->Engineer->Reviewer->Optimizer, {model}) — task: {goal}")
+            presult = run_pipeline(
+                goal, responder=_resolve_responder(model),
+                on_step=lambda role, out: print(f"\n--- {role} ---\n{out}"),
+            )
+            print(f"\n=== final ({len(presult.stages)} stages) ===")
+            print(presult.final)
+            sys.exit(0)
         if dual:
             print(f"Dual loop (Claude proposes, Gemini critiques) — goal: {goal}")
             result = run_dual_loop(
