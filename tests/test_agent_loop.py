@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""Offline tests for agent_loop — no API key or network required.
+
+Uses fake responders (plain callables) to verify loop control flow:
+  1. Loop stops when the responder emits the DONE_MARKER
+  2. Loop respects max_iterations when the goal is never signalled met
+  3. DONE_MARKER is stripped from the final answer
+  4. Dual loop stops when the critic approves
+  5. Input guards reject empty goals / bad budgets
+
+Usage:  python tests/test_agent_loop.py
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from agent_loop import DONE_MARKER, run_dual_loop, run_loop  # noqa: E402
+
+
+def test_stops_on_done_marker():
+    calls = {"n": 0}
+
+    def responder(prompt):
+        calls["n"] += 1
+        # Signal done on the 3rd iteration.
+        return "answer" + (f"\n{DONE_MARKER}" if calls["n"] == 3 else "")
+
+    result = run_loop("some goal", responder, max_iterations=10)
+    assert result.done is True, "should have stopped on the done marker"
+    assert result.iterations == 3, f"expected 3 iterations, got {result.iterations}"
+    assert DONE_MARKER not in result.final, "done marker should be stripped"
+    print("PASS: stops on done marker (3 iterations)")
+
+
+def test_respects_max_iterations():
+    result = run_loop("never done", lambda p: "still working", max_iterations=4)
+    assert result.done is False, "should not report done"
+    assert result.iterations == 4, f"expected 4 iterations, got {result.iterations}"
+    assert result.final == "still working"
+    print("PASS: respects max_iterations budget")
+
+
+def test_dual_loop_stops_on_approval():
+    rounds = {"n": 0}
+
+    def generator(prompt):
+        return f"proposal v{rounds['n'] + 1}"
+
+    def critic(prompt):
+        rounds["n"] += 1
+        return DONE_MARKER if rounds["n"] == 2 else "needs more detail"
+
+    result = run_dual_loop("build X", generator, critic, max_iterations=5)
+    assert result.done is True
+    assert result.iterations == 2, f"expected 2 iterations, got {result.iterations}"
+    assert result.final == "proposal v2"
+    print("PASS: dual loop stops when critic approves (2 iterations)")
+
+
+def test_input_guards():
+    for bad_goal in ("", "   "):
+        try:
+            run_loop(bad_goal, lambda p: "x")
+            raise AssertionError("expected ValueError for empty goal")
+        except ValueError:
+            pass
+    try:
+        run_loop("ok", lambda p: "x", max_iterations=0)
+        raise AssertionError("expected ValueError for max_iterations=0")
+    except ValueError:
+        pass
+    print("PASS: input guards reject empty goal / bad budget")
+
+
+if __name__ == "__main__":
+    tests = [
+        test_stops_on_done_marker,
+        test_respects_max_iterations,
+        test_dual_loop_stops_on_approval,
+        test_input_guards,
+    ]
+    failed = 0
+    for t in tests:
+        try:
+            t()
+        except AssertionError as e:
+            failed += 1
+            print(f"FAIL: {t.__name__}: {e}")
+    print(f"\n{len(tests) - failed}/{len(tests)} passed")
+    sys.exit(1 if failed else 0)
