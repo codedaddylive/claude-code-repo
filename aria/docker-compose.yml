@@ -1,0 +1,23 @@
+# Aria — one-command local run against a hosted open-model provider (no GPU).
+#
+#   1. cp aria/.env.example aria/.env   and fill in ARIA_API_KEY
+#   2. docker compose -f aria/docker-compose.yml up --build
+#   3. open http://localhost:8100/health
+#
+# The build context is the repository root so the image can copy the aria/ package.
+services:
+  aria:
+    build:
+      context: ..
+      dockerfile: aria/Dockerfile
+    ports:
+      - "8100:8100"
+    env_file:
+      - path: .env
+        required: false        # created by you from .env.example
+    volumes:
+      - aria-data:/data          # persists the index across restarts
+    restart: unless-stopped
+
+volumes:
+  aria-data:

@@ -116,6 +116,33 @@ python -m aria.cli ask "..."      # or deploy the API via aria/Dockerfile
 A containerized deploy (Render/Railway/Fly, step by step) is documented in
 [`DEPLOY.md`](./DEPLOY.md).
 
+### Try it locally with Docker (one command)
+
+**Hosted models (no GPU, needs a provider key):**
+
+```bash
+cp aria/.env.example aria/.env      # then put your ARIA_API_KEY in it
+docker compose -f aria/docker-compose.yml up --build
+# → http://localhost:8100/health
+```
+
+**Fully local (no key, runs open models via Ollama on your machine):**
+
+```bash
+docker compose -f aria/docker-compose.local.yml up --build -d
+# one-time: pull the models into the Ollama container
+docker compose -f aria/docker-compose.local.yml exec ollama ollama pull llama3.1:8b
+docker compose -f aria/docker-compose.local.yml exec ollama ollama pull nomic-embed-text
+# → http://localhost:8100/health
+```
+
+Then ingest and ask over HTTP:
+
+```bash
+curl -X POST localhost:8100/ingest -H 'content-type: application/json' -d '{"source":"pallets/flask"}'
+curl -X POST localhost:8100/ask    -H 'content-type: application/json' -d '{"question":"How are routes registered?"}'
+```
+
 ## Architecture
 
 ```
