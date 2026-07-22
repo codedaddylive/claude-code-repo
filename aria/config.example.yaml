@@ -1,0 +1,32 @@
+# Aria configuration reference.
+#
+# Aria is configured entirely through environment variables (prefix ARIA_) or a
+# .env file. This YAML is documentation only — copy the values you want into a
+# .env file or export them in your shell.
+
+# --- LLM backend ---
+# 'ollama' talks to a local Ollama server; 'echo' is an offline stub (no server).
+ARIA_LLM_BACKEND: ollama
+ARIA_OLLAMA_HOST: http://localhost:11434
+# Any open-source chat model you have pulled in Ollama.
+# Good options: llama3.1:8b, qwen2.5:7b, mistral:7b, gemma2:9b
+ARIA_MODEL: llama3.1:8b
+
+# --- Embeddings ---
+# 'ollama' uses a local embedding model; 'hash' is a deterministic offline fallback.
+ARIA_EMBED_BACKEND: ollama
+ARIA_EMBED_MODEL: nomic-embed-text
+ARIA_EMBED_DIM: 512            # only used by the 'hash' backend
+
+# --- Retrieval / chunking ---
+ARIA_TOP_K: 6
+ARIA_CHUNK_LINES: 60
+ARIA_CHUNK_OVERLAP: 12
+ARIA_MAX_FILE_BYTES: 512000
+
+# --- Generation ---
+ARIA_TEMPERATURE: 0.2
+ARIA_MAX_CONTEXT_CHARS: 12000
+
+# --- Storage ---
+ARIA_DATA_DIR: ~/.aria
