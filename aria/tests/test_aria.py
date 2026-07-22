@@ -13,10 +13,21 @@ from pathlib import Path
 
 from aria.agent import AriaAgent
 from aria.config import load_settings
-from aria.embeddings import HashEmbedding, make_embedding_backend
+from aria.embeddings import (
+    HashEmbedding,
+    OpenAICompatEmbedding,
+    make_embedding_backend,
+    parse_openai_embeddings,
+)
 from aria.ingest import chunk_file, ingest_repo, normalize_repo
-from aria.llm import EchoLLM, make_llm_backend
-from aria.models import Chunk
+from aria.llm import (
+    EchoLLM,
+    OpenAICompatLLM,
+    make_llm_backend,
+    parse_openai_chat,
+    parse_openai_stream_line,
+)
+from aria.models import BackendError, Chunk
 from aria.vectorstore import VectorStore
 
 
@@ -138,6 +149,62 @@ def test_agent_load_roundtrip_persists_index():
 
         reloaded = AriaAgent.load(settings)
         assert len(reloaded.store) >= 1
+
+
+def test_chunk_citation_is_serialized():
+    c = Chunk(id="1", repo="o/r", path="a.py", start_line=3, end_line=9, text="x")
+    dumped = c.model_dump()
+    assert dumped["citation"] == "o/r/a.py:3-9"  # API consumers get it directly
+    # ...and a chunk containing the computed field still validates on reload.
+    assert Chunk.model_validate_json(c.model_dump_json()).citation == "o/r/a.py:3-9"
+
+
+def test_openai_response_parsers():
+    chat = {"choices": [{"message": {"role": "assistant", "content": "hello there"}}]}
+    assert parse_openai_chat(chat) == "hello there"
+
+    emb = {"data": [{"embedding": [0.1, 0.2]}, {"embedding": [0.3, 0.4]}]}
+    assert parse_openai_embeddings(emb) == [[0.1, 0.2], [0.3, 0.4]]
+
+    # Streaming SSE lines.
+    delta = 'data: {"choices":[{"delta":{"content":"Hi"}}]}'
+    assert parse_openai_stream_line(delta) == "Hi"
+    assert parse_openai_stream_line("data: [DONE]") is None
+    assert parse_openai_stream_line("") is None
+    assert parse_openai_stream_line(": keep-alive") is None
+
+
+def test_backend_factory_selection_and_key_validation():
+    # 'openai' backends select the OpenAI-compatible classes when a key is set.
+    s = load_settings(
+        llm_backend="openai", embed_backend="openai",
+        api_key="test-key", model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        embed_model="BAAI/bge-large-en-v1.5",
+    )
+    assert isinstance(make_llm_backend(s), OpenAICompatLLM)
+    assert isinstance(make_embedding_backend(s), OpenAICompatEmbedding)
+
+    # Missing key is a clear, early error (no silent misconfiguration).
+    s_nokey = load_settings(llm_backend="openai", embed_backend="openai", api_key="")
+    for factory in (make_llm_backend, make_embedding_backend):
+        try:
+            factory(s_nokey)
+            raise AssertionError("expected BackendError for missing api_key")
+        except BackendError:
+            pass
+
+
+def test_embed_api_credential_fallback():
+    s = load_settings(api_base_url="https://chat.example/v1", api_key="shared")
+    assert s.resolved_embed_api_base_url == "https://chat.example/v1"
+    assert s.resolved_embed_api_key == "shared"
+    s2 = load_settings(
+        api_key="shared",
+        embed_api_base_url="https://embed.example/v1",
+        embed_api_key="embed-only",
+    )
+    assert s2.resolved_embed_api_base_url == "https://embed.example/v1"
+    assert s2.resolved_embed_api_key == "embed-only"
 
 
 def _run_all():

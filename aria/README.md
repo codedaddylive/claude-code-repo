@@ -16,12 +16,15 @@ assistant by assembling proven open-source components:
 
 | Layer | Aria uses | Open-source options |
 |---|---|---|
-| LLM | [Ollama](https://ollama.com) (local server) | Llama 3.1, Qwen 2.5, Mistral, Gemma 2, Phi |
-| Embeddings | Ollama embeddings | `nomic-embed-text`, `mxbai-embed-large` |
+| LLM | [Ollama](https://ollama.com) locally, **or** any OpenAI-compatible host | Llama 3.1/3.3, Qwen 2.5, Mistral, Gemma 2, Phi |
+| Embeddings | Ollama, hosted API, or offline hash | `nomic-embed-text`, `bge-large`, `mxbai-embed-large` |
 | Vector store | built-in NumPy store | swap for FAISS / Chroma behind one interface |
 | Knowledge | your GitHub repos | any repo, org, or local path |
 
-Nothing here calls a paid API. It is yours to run, inspect, and extend.
+Run it three ways, all open-source models: **fully local** (Ollama, no API),
+**fully offline** (built-in hash + echo, no server at all), or **in the cloud
+with no GPU** (a hosted provider serves open models over an OpenAI-compatible
+API — see [`DEPLOY.md`](./DEPLOY.md)).
 
 ## Install
 
@@ -87,14 +90,31 @@ See [`config.example.yaml`](./config.example.yaml) for the full reference.
 
 | Variable | Default | Description |
 |---|---|---|
-| `ARIA_LLM_BACKEND` | `ollama` | `ollama` or `echo` (offline) |
-| `ARIA_MODEL` | `llama3.1:8b` | any chat model pulled in Ollama |
+| `ARIA_LLM_BACKEND` | `ollama` | `ollama`, `openai` (hosted), or `echo` (offline) |
+| `ARIA_MODEL` | `llama3.1:8b` | Ollama tag, or the provider's model id for `openai` |
 | `ARIA_OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
-| `ARIA_EMBED_BACKEND` | `ollama` | `ollama` or `hash` (offline) |
-| `ARIA_EMBED_MODEL` | `nomic-embed-text` | Ollama embedding model |
+| `ARIA_EMBED_BACKEND` | `ollama` | `ollama`, `openai`, or `hash` (offline) |
+| `ARIA_EMBED_MODEL` | `nomic-embed-text` | embedding model id |
+| `ARIA_API_BASE_URL` | `https://api.together.xyz/v1` | hosted provider URL (`openai` backend) |
+| `ARIA_API_KEY` | – | hosted provider key (`openai` backend) |
 | `ARIA_TOP_K` | `6` | chunks retrieved per query |
 | `ARIA_CHUNK_LINES` / `ARIA_CHUNK_OVERLAP` | `60` / `12` | chunking window |
 | `ARIA_DATA_DIR` | `~/.aria` | where the index + clones live |
+
+## Run in the cloud (no GPU)
+
+Use a hosted provider that serves open models over an OpenAI-compatible API:
+
+```bash
+export ARIA_LLM_BACKEND=openai ARIA_EMBED_BACKEND=openai
+export ARIA_API_KEY=<your-provider-key>
+export ARIA_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo
+export ARIA_EMBED_MODEL=BAAI/bge-large-en-v1.5
+python -m aria.cli ask "..."      # or deploy the API via aria/Dockerfile
+```
+
+A containerized deploy (Render/Railway/Fly, step by step) is documented in
+[`DEPLOY.md`](./DEPLOY.md).
 
 ## Architecture
 

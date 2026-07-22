@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class Chunk(BaseModel):
@@ -13,6 +13,7 @@ class Chunk(BaseModel):
     end_line: int
     text: str
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def citation(self) -> str:
         return f"{self.repo}/{self.path}:{self.start_line}-{self.end_line}"

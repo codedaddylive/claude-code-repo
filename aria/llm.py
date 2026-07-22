@@ -100,7 +100,101 @@ class OllamaLLM(LLMBackend):
             ) from e
 
 
+def parse_openai_chat(data: dict) -> str:
+    """Extract the assistant message from an OpenAI-style chat response."""
+    return data["choices"][0]["message"]["content"]
+
+
+def parse_openai_stream_line(line: str) -> str | None:
+    """Parse one SSE line from an OpenAI-style stream into a text delta.
+
+    Returns the delta string, or ``None`` for keep-alive / non-content lines.
+    Raises ``StopIteration`` semantics via the sentinel ``"[DONE]"`` handled by
+    the caller.
+    """
+    line = line.strip()
+    if not line or not line.startswith("data:"):
+        return None
+    payload = line[len("data:"):].strip()
+    if payload == "[DONE]":
+        return None
+    data = json.loads(payload)
+    return data.get("choices", [{}])[0].get("delta", {}).get("content")
+
+
+class OpenAICompatLLM(LLMBackend):
+    """Chat completions from any OpenAI-compatible hosted provider.
+
+    Works with Together, OpenRouter, Groq, Fireworks, a self-hosted vLLM, etc.
+    All of these serve open-source models — Aria stays open, the GPUs are just
+    someone else's.
+    """
+
+    def __init__(self, base_url: str, api_key: str, model: str, timeout: float = 300.0) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+
+    def _headers(self) -> dict:
+        return {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+
+    def _payload(self, messages: list[ChatMessage], temperature: float, stream: bool) -> dict:
+        return {
+            "model": self.model,
+            "messages": [{"role": m.role, "content": m.content} for m in messages],
+            "temperature": temperature,
+            "stream": stream,
+        }
+
+    def chat(self, messages: list[ChatMessage], *, temperature: float = 0.2) -> str:
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                resp = client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers(),
+                    json=self._payload(messages, temperature, stream=False),
+                )
+                resp.raise_for_status()
+                return parse_openai_chat(resp.json())
+        except (httpx.HTTPError, KeyError, IndexError) as e:
+            raise BackendError(
+                f"Hosted chat request to {self.base_url} failed ({e}). Check "
+                f"ARIA_API_KEY and that model '{self.model}' is valid for the provider."
+            ) from e
+
+    def stream(
+        self, messages: list[ChatMessage], *, temperature: float = 0.2
+    ) -> Iterator[str]:
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                with client.stream(
+                    "POST",
+                    f"{self.base_url}/chat/completions",
+                    headers=self._headers(),
+                    json=self._payload(messages, temperature, stream=True),
+                ) as resp:
+                    resp.raise_for_status()
+                    for line in resp.iter_lines():
+                        piece = parse_openai_stream_line(line)
+                        if piece:
+                            yield piece
+        except (httpx.HTTPError, json.JSONDecodeError, KeyError, IndexError) as e:
+            raise BackendError(
+                f"Hosted stream request to {self.base_url} failed ({e}). Check "
+                f"ARIA_API_KEY and that model '{self.model}' is valid for the provider."
+            ) from e
+
+
 def make_llm_backend(settings: AriaSettings) -> LLMBackend:
     if settings.llm_backend == "echo":
         return EchoLLM()
+    if settings.llm_backend == "openai":
+        if not settings.api_key:
+            raise BackendError(
+                "ARIA_LLM_BACKEND=openai requires ARIA_API_KEY to be set."
+            )
+        return OpenAICompatLLM(
+            base_url=settings.api_base_url, api_key=settings.api_key, model=settings.model
+        )
     return OllamaLLM(host=settings.ollama_host, model=settings.model)

@@ -5,16 +5,27 @@
 # .env file or export them in your shell.
 
 # --- LLM backend ---
-# 'ollama' talks to a local Ollama server; 'echo' is an offline stub (no server).
+# 'ollama' = local Ollama server; 'openai' = any hosted OpenAI-compatible
+# provider (Together/OpenRouter/Groq/vLLM); 'echo' = offline stub (no server).
 ARIA_LLM_BACKEND: ollama
 ARIA_OLLAMA_HOST: http://localhost:11434
-# Any open-source chat model you have pulled in Ollama.
-# Good options: llama3.1:8b, qwen2.5:7b, mistral:7b, gemma2:9b
+# For Ollama: a pulled tag (llama3.1:8b, qwen2.5:7b, mistral:7b, gemma2:9b).
+# For 'openai': the provider's model id (e.g. meta-llama/Llama-3.3-70B-Instruct-Turbo).
 ARIA_MODEL: llama3.1:8b
 
+# --- Hosted provider (only when ARIA_LLM_BACKEND/EMBED_BACKEND = openai) ---
+# Cloud path with no GPU to manage. See DEPLOY.md.
+ARIA_API_BASE_URL: https://api.together.xyz/v1
+ARIA_API_KEY: ""                       # set as a secret in production
+# Optional: use a different provider/key just for embeddings (falls back to the
+# values above when empty).
+ARIA_EMBED_API_BASE_URL: ""
+ARIA_EMBED_API_KEY: ""
+
 # --- Embeddings ---
-# 'ollama' uses a local embedding model; 'hash' is a deterministic offline fallback.
+# 'ollama' = local model; 'openai' = hosted endpoint; 'hash' = offline fallback.
 ARIA_EMBED_BACKEND: ollama
+# For Ollama: nomic-embed-text. For 'openai': e.g. BAAI/bge-large-en-v1.5.
 ARIA_EMBED_MODEL: nomic-embed-text
 ARIA_EMBED_DIM: 512            # only used by the 'hash' backend
 

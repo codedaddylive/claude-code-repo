@@ -93,7 +93,65 @@ class OllamaEmbedding(EmbeddingBackend):
         return _l2_normalize(np.asarray(vectors, dtype=np.float32))
 
 
+def parse_openai_embeddings(data: dict) -> list[list[float]]:
+    """Extract vectors from an OpenAI-style embeddings response."""
+    return [item["embedding"] for item in data["data"]]
+
+
+class OpenAICompatEmbedding(EmbeddingBackend):
+    """Embeddings from any OpenAI-compatible hosted provider (e.g. Together)."""
+
+    def __init__(self, base_url: str, api_key: str, model: str, timeout: float = 60.0) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+        self._dim: int | None = None
+
+    @property
+    def dim(self) -> int:  # type: ignore[override]
+        if self._dim is None:
+            self._dim = int(self.embed_one("dimension probe").shape[0])
+        return self._dim
+
+    @dim.setter
+    def dim(self, value: int) -> None:
+        self._dim = value
+
+    def embed(self, texts: list[str]) -> np.ndarray:
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                resp = client.post(
+                    f"{self.base_url}/embeddings",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={"model": self.model, "input": texts},
+                )
+                resp.raise_for_status()
+                vectors = parse_openai_embeddings(resp.json())
+        except (httpx.HTTPError, KeyError, IndexError) as e:
+            raise BackendError(
+                f"Hosted embedding request to {self.base_url} failed ({e}). Check "
+                f"ARIA_API_KEY and that embed model '{self.model}' is valid."
+            ) from e
+        return _l2_normalize(np.asarray(vectors, dtype=np.float32))
+
+
 def make_embedding_backend(settings: AriaSettings) -> EmbeddingBackend:
     if settings.embed_backend == "hash":
         return HashEmbedding(dim=settings.embed_dim)
+    if settings.embed_backend == "openai":
+        key = settings.resolved_embed_api_key
+        if not key:
+            raise BackendError(
+                "ARIA_EMBED_BACKEND=openai requires ARIA_API_KEY (or "
+                "ARIA_EMBED_API_KEY) to be set."
+            )
+        return OpenAICompatEmbedding(
+            base_url=settings.resolved_embed_api_base_url,
+            api_key=key,
+            model=settings.embed_model,
+        )
     return OllamaEmbedding(host=settings.ollama_host, model=settings.embed_model)

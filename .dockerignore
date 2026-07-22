@@ -1,0 +1,9 @@
+# Build context excludes for the Aria image (aria/Dockerfile).
+.git/
+**/__pycache__/
+**/*.py[cod]
+.aria/
+*.wav
+*.mp4
+*.mkv
+frames/

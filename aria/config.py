@@ -20,10 +20,11 @@ class AriaSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="ARIA_", env_file=".env", extra="ignore")
 
     # --- LLM backend -------------------------------------------------------
-    llm_backend: Literal["ollama", "echo"] = Field(
+    llm_backend: Literal["ollama", "openai", "echo"] = Field(
         default="ollama",
         description="Which LLM backend to use. 'ollama' talks to a local Ollama "
-        "server; 'echo' is an offline stub used for tests and demos.",
+        "server; 'openai' talks to any OpenAI-compatible hosted provider "
+        "(Together, OpenRouter, Groq, vLLM, ...); 'echo' is an offline stub.",
     )
     ollama_host: str = Field(
         default="http://localhost:11434",
@@ -31,18 +32,42 @@ class AriaSettings(BaseSettings):
     )
     model: str = Field(
         default="llama3.1:8b",
-        description="Open-source chat model served by Ollama.",
+        description="Open-source chat model. For Ollama use a pulled tag "
+        "(llama3.1:8b); for the 'openai' backend use the provider's model id "
+        "(e.g. meta-llama/Llama-3.3-70B-Instruct-Turbo on Together).",
+    )
+
+    # --- Hosted (OpenAI-compatible) provider -------------------------------
+    api_base_url: str = Field(
+        default="https://api.together.xyz/v1",
+        description="Base URL for the OpenAI-compatible 'openai' backend.",
+    )
+    api_key: str = Field(
+        default="",
+        description="API key for the hosted provider (used by the 'openai' backend).",
+    )
+    embed_api_base_url: str = Field(
+        default="",
+        description="Optional separate base URL for hosted embeddings; falls back "
+        "to api_base_url when empty.",
+    )
+    embed_api_key: str = Field(
+        default="",
+        description="Optional separate key for hosted embeddings; falls back to "
+        "api_key when empty.",
     )
 
     # --- Embedding backend -------------------------------------------------
-    embed_backend: Literal["ollama", "hash"] = Field(
+    embed_backend: Literal["ollama", "openai", "hash"] = Field(
         default="ollama",
         description="Embedding backend. 'ollama' uses a local embedding model; "
-        "'hash' is a deterministic offline fallback that needs no server.",
+        "'openai' uses a hosted OpenAI-compatible embeddings endpoint; 'hash' is "
+        "a deterministic offline fallback that needs no server.",
     )
     embed_model: str = Field(
         default="nomic-embed-text",
-        description="Open-source embedding model served by Ollama.",
+        description="Embedding model. For Ollama: nomic-embed-text. For the "
+        "'openai' backend: the provider's id (e.g. BAAI/bge-large-en-v1.5).",
     )
     embed_dim: int = Field(
         default=512,
@@ -78,6 +103,14 @@ class AriaSettings(BaseSettings):
     @property
     def repos_dir(self) -> Path:
         return self.data_dir / "repos"
+
+    @property
+    def resolved_embed_api_base_url(self) -> str:
+        return self.embed_api_base_url or self.api_base_url
+
+    @property
+    def resolved_embed_api_key(self) -> str:
+        return self.embed_api_key or self.api_key
 
     def ensure_dirs(self) -> None:
         self.index_dir.mkdir(parents=True, exist_ok=True)
