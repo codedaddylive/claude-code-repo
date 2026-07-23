@@ -79,10 +79,25 @@ no model server is available.
 ```bash
 python -m aria.cli team recommend                 # LLM judges (falls back to heuristic)
 python -m aria.cli team recommend --judge heuristic
-python -m aria.cli team recommend -o team.json     # save the roster
+python -m aria.cli team recommend --config         # also print how to RUN each pick
+python -m aria.cli team recommend -o team.json     # save the roster (incl. run plan)
 python -m aria.cli team models                     # inspect the catalog
 python -m aria.cli team models --role designer
 ```
+
+With `--config`, each pick comes with a runnable command — local and hosted —
+so you can drop it straight into Aria:
+
+```
+Reasoning → DeepSeek-R1
+  local : ollama pull deepseek-r1  &&  export ARIA_MODEL=deepseek-r1
+  hosted: export ARIA_LLM_BACKEND=openai ARIA_MODEL=deepseek-ai/DeepSeek-R1  # + ARIA_API_KEY/ARIA_API_BASE_URL
+Designer → FLUX.1 [schnell]
+  image : ComfyUI / diffusers; weights on Hugging Face (black-forest-labs/FLUX.1-schnell)
+```
+
+(Local run tags and hosted ids are best-effort hints in `aria/data/models.json`;
+confirm the exact id with your Ollama version / hosted provider.)
 
 Example roster (heuristic judge; all free/open-weight — verify current ratings
 on live leaderboards, and edit `aria/data/models.json` to re-rank or add models):

@@ -30,7 +30,7 @@ from aria.llm import (
 )
 from aria.llm import LLMBackend
 from aria.models import BackendError, Chunk
-from aria.team import TeamJudge, load_catalog, parse_judge_scores
+from aria.team import TeamJudge, load_catalog, parse_judge_scores, run_plan
 from aria.vectorstore import VectorStore
 
 
@@ -282,6 +282,34 @@ def test_team_llm_judge_overrides_heuristic():
     # A text-only favorite never leaks into the image-only designer role.
     image_ids = {m.id for m in load_catalog().models if m.modality == "image"}
     assert picks["designer"].winner_id in image_ids
+
+
+def test_run_plan_and_pick_carry_runnable_config():
+    cat = load_catalog()
+    cards = {m.id: m for m in cat.models}
+
+    # Text model with a local tag → local + hosted run lines target Aria's backends.
+    text = run_plan(cards["deepseek-r1"])
+    assert text.modality == "text"
+    assert "ARIA_MODEL=deepseek-r1" in text.local
+    assert "ARIA_LLM_BACKEND=openai" in text.hosted
+
+    # Image model → tooling notes, no chat-backend commands.
+    img = run_plan(cards["flux1-schnell"])
+    assert img.modality == "image"
+    assert img.local == "" and img.hosted == ""
+    assert "diffusers" in img.notes or "ComfyUI" in img.notes
+
+    # A very large text model with no local tag → hosted only, local blank.
+    kimi = run_plan(cards["kimi-k2"])
+    assert kimi.local == "" and "ARIA_MODEL=moonshotai/Kimi-K2-Instruct" in kimi.hosted
+
+    # The recommended roster carries the run plan + license per pick.
+    roster = TeamJudge(EchoLLM()).recommend(method="heuristic")
+    for pick in roster.picks:
+        assert pick.license
+        if pick.run.modality == "text":
+            assert pick.run.local or pick.run.hosted
 
 
 def test_noncommercial_models_excluded_by_default():

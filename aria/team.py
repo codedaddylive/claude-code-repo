@@ -32,6 +32,8 @@ class ModelCard(BaseModel):
     open_weights: bool = True
     free_commercial_use: Literal["yes", "limited", "no"] = "yes"
     params: str = ""
+    ollama: str = ""       # local run tag (blank = not packaged / too large)
+    hosted_id: str = ""    # OpenAI-compatible provider / HF id (blank = confirm)
     run: str = ""
     homepage: str = ""
     strengths: list[str] = Field(default_factory=list)
@@ -64,6 +66,15 @@ class Candidate(BaseModel):
     reason: str = ""
 
 
+class RunPlan(BaseModel):
+    """How to actually run a chosen model."""
+
+    modality: str = "text"
+    local: str = ""       # e.g. "ollama pull X  &&  ARIA_MODEL=X"
+    hosted: str = ""      # e.g. "ARIA_MODEL=<provider id>"
+    notes: str = ""       # free-form run guidance (used for image models)
+
+
 class RolePick(BaseModel):
     role_id: str
     role_name: str
@@ -71,6 +82,9 @@ class RolePick(BaseModel):
     winner_name: str
     score: float
     reason: str
+    license: str = ""
+    free_commercial_use: str = ""
+    run: RunPlan = Field(default_factory=RunPlan)
     runners_up: list[Candidate] = Field(default_factory=list)
 
 
@@ -111,6 +125,27 @@ def parse_judge_scores(text: str) -> list[dict]:
         if isinstance(item, dict) and "id" in item and "score" in item:
             out.append(item)
     return out
+
+
+def run_plan(card: ModelCard) -> RunPlan:
+    """Produce concrete run instructions for a model card.
+
+    For text models this maps to Aria's own backends (Ollama locally, or the
+    OpenAI-compatible hosted backend). Image models get their tooling note,
+    since they are generators rather than chat backends.
+    """
+    if card.modality == "image":
+        return RunPlan(modality="image", notes=card.run)
+    local = ""
+    if card.ollama:
+        local = f"ollama pull {card.ollama}  &&  export ARIA_MODEL={card.ollama}"
+    hosted = ""
+    if card.hosted_id:
+        hosted = (
+            f"export ARIA_LLM_BACKEND=openai ARIA_MODEL={card.hosted_id}  "
+            "# set ARIA_API_KEY + ARIA_API_BASE_URL for your provider"
+        )
+    return RunPlan(modality="text", local=local, hosted=hosted, notes=card.run)
 
 
 class TeamJudge:
@@ -222,11 +257,15 @@ class TeamJudge:
             if not scored:
                 scored = self._score_heuristic(role, cards)
             winner = scored[0]
+            winner_card = next(c for c in cards if c.id == winner.model_id)
             picks.append(
                 RolePick(
                     role_id=role.id, role_name=role.name,
                     winner_id=winner.model_id, winner_name=winner.name,
                     score=winner.score, reason=winner.reason,
+                    license=winner_card.license,
+                    free_commercial_use=winner_card.free_commercial_use,
+                    run=run_plan(winner_card),
                     runners_up=scored[1:3],
                 )
             )

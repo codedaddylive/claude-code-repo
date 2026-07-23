@@ -175,6 +175,9 @@ def cmd_team_recommend(
         False, "--include-noncommercial",
         help="Also consider open-weight models whose license forbids commercial use.",
     ),
+    show_config: bool = typer.Option(
+        False, "--config", "-c", help="Print how to run each pick (local + hosted)."
+    ),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save roster as JSON."),
 ):
     """Pick the best free/open-source model for each role and print the team."""
@@ -195,10 +198,12 @@ def cmd_team_recommend(
     table.add_column("Role", style="bold")
     table.add_column("Pick", style="cyan")
     table.add_column("Score", justify="right")
+    table.add_column("License")
     table.add_column("Runners-up", style="dim")
     for pick in roster.picks:
         runners = ", ".join(f"{escape(c.name)} ({c.score:g})" for c in pick.runners_up)
-        table.add_row(pick.role_name, escape(pick.winner_name), f"{pick.score:g}", runners or "—")
+        table.add_row(pick.role_name, escape(pick.winner_name), f"{pick.score:g}",
+                      escape(pick.license), runners or "—")
     console.print(table)
     console.print("\n[dim]Why each pick:[/dim]")
     for pick in roster.picks:
@@ -206,6 +211,19 @@ def cmd_team_recommend(
             f"  [bold]{pick.role_name}[/bold] → [cyan]{escape(pick.winner_name)}[/cyan]: "
             f"{escape(pick.reason)}"
         )
+
+    if show_config:
+        console.print("\n[dim]How to run each pick:[/dim]")
+        for pick in roster.picks:
+            console.print(f"  [bold]{pick.role_name}[/bold] → [cyan]{escape(pick.winner_name)}[/cyan]")
+            if pick.run.local:
+                console.print(f"    local : [green]{escape(pick.run.local)}[/green]")
+            if pick.run.hosted:
+                console.print(f"    hosted: [green]{escape(pick.run.hosted)}[/green]")
+            if pick.run.modality == "image":
+                console.print(f"    image : {escape(pick.run.notes)}")
+            elif not pick.run.local and not pick.run.hosted:
+                console.print(f"    notes : {escape(pick.run.notes)}")
 
     if output:
         output.write_text(roster.model_dump_json(indent=2))
