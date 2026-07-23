@@ -144,6 +144,14 @@ uvicorn aria.api:app --host 0.0.0.0 --port 8100 --workers 1
 | GET | `/team/models` | The open-source model catalog + roles |
 | GET | `/team/recommend?method=auto` | Judge and return the recommended team |
 
+## Use it in VS Code
+
+A standalone VS Code extension (in [`vscode/`](./vscode/)) talks to a running
+Aria server — chat over your repos with clickable citations, index folders, and
+view the AI-team roster, all **independent of any other assistant**. Open
+`aria/vscode/` in VS Code and press **F5**, or package it with `vsce`. See
+[`vscode/README.md`](./vscode/README.md).
+
 ## Configuration
 
 All settings are environment variables prefixed with `ARIA_` (or a `.env` file).
