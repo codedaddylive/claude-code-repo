@@ -50,6 +50,12 @@ class Catalog(BaseModel):
                 return r
         raise AriaError(f"Unknown role: {role_id}")
 
+    def model(self, model_id: str) -> ModelCard:
+        for m in self.models:
+            if m.id == model_id:
+                return m
+        raise AriaError(f"Unknown model: {model_id}")
+
 
 def load_catalog(path: Path | None = None) -> Catalog:
     raw = json.loads((path or _DATA_FILE).read_text(encoding="utf-8"))
@@ -146,6 +152,39 @@ def run_plan(card: ModelCard) -> RunPlan:
             "# set ARIA_API_KEY + ARIA_API_BASE_URL for your provider"
         )
     return RunPlan(modality="text", local=local, hosted=hosted, notes=card.run)
+
+
+def env_for(card: ModelCard, hosted: bool = False) -> dict[str, str]:
+    """Build the Aria environment variables needed to run a model.
+
+    ``hosted=False`` targets local Ollama; ``hosted=True`` targets the
+    OpenAI-compatible backend. Raises for image models (they are generators,
+    not chat backends) and when the requested target has no run id.
+    """
+    if card.modality != "text":
+        raise AriaError(
+            f"{card.name} is an image model — run it via its own tooling "
+            f"({card.run}), not as an Aria chat backend."
+        )
+    if hosted:
+        if not card.hosted_id:
+            raise AriaError(f"No hosted id known for {card.name}; try local (--no-hosted).")
+        return {
+            "ARIA_LLM_BACKEND": "openai",
+            "ARIA_API_BASE_URL": "https://api.together.xyz/v1",
+            "ARIA_API_KEY": "",  # fill in your provider key
+            "ARIA_MODEL": card.hosted_id,
+        }
+    if not card.ollama:
+        raise AriaError(
+            f"{card.name} has no local Ollama tag (it may be too large); "
+            f"use hosted (--hosted) instead."
+        )
+    return {
+        "ARIA_LLM_BACKEND": "ollama",
+        "ARIA_OLLAMA_HOST": "http://localhost:11434",
+        "ARIA_MODEL": card.ollama,
+    }
 
 
 class TeamJudge:

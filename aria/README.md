@@ -83,6 +83,17 @@ python -m aria.cli team recommend --config         # also print how to RUN each 
 python -m aria.cli team recommend -o team.json     # save the roster (incl. run plan)
 python -m aria.cli team models                     # inspect the catalog
 python -m aria.cli team models --role designer
+python -m aria.cli team env reasoning -o r.env     # write a ready-to-run .env for a role
+python -m aria.cli team env general_coding --hosted
+```
+
+`team env <role>` writes a ready-to-source Aria `.env` for that role's winning
+model (local Ollama by default, `--hosted` for a provider):
+
+```bash
+python -m aria.cli team env reasoning -o reasoning.env
+set -a; source reasoning.env; set +a          # now Aria uses that model
+python -m aria.cli ask "..."
 ```
 
 With `--config`, each pick comes with a runnable command — local and hosted —

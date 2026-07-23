@@ -16,7 +16,7 @@ from .config import load_settings
 from .ingest import ingest_repo
 from .llm import make_llm_backend
 from .models import AriaError
-from .team import TeamJudge, load_catalog
+from .team import TeamJudge, env_for, load_catalog
 
 app = typer.Typer(
     name="aria",
@@ -191,7 +191,7 @@ def cmd_team_recommend(
             p.add_task(f"Judging candidates ({method})...", total=None)
             roster = judge.recommend(method=method, include_noncommercial=include_noncommercial)
     except AriaError as e:
-        console.print(f"[red]Error:[/red] {e}")
+        console.print(f"[red]Error:[/red] {escape(str(e))}")
         raise typer.Exit(code=1)
 
     table = Table(title=f"Aria AI team — free & open-source (judge: {roster.method})")
@@ -233,6 +233,45 @@ def cmd_team_recommend(
         "OpenLLM Leaderboard, Aider/SWE-bench). Edit aria/data/models.json to add "
         "or re-rank models.[/dim]"
     )
+
+
+@team_app.command("env")
+def cmd_team_env(
+    role: str = typer.Argument(..., help="Role id to configure (see 'aria team models')."),
+    hosted: bool = typer.Option(False, "--hosted/--local", help="Target hosted provider vs local Ollama."),
+    method: str = typer.Option("auto", "--judge", "-j", help="auto | llm | heuristic."),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Write a .env file (default: print)."),
+):
+    """Write a ready-to-use Aria .env for the winning model of a role."""
+    if method not in ("auto", "llm", "heuristic"):
+        console.print("[red]--judge must be one of: auto, llm, heuristic[/red]")
+        raise typer.Exit(code=1)
+    settings = load_settings()
+    judge = TeamJudge(make_llm_backend(settings))
+    try:
+        catalog = judge.catalog
+        catalog.role(role)  # validate role id
+        roster = judge.recommend(method=method)
+        pick = next((p for p in roster.picks if p.role_id == role), None)
+        if pick is None:
+            console.print(f"[red]No pick for role '{role}'.[/red]")
+            raise typer.Exit(code=1)
+        card = catalog.model(pick.winner_id)
+        env = env_for(card, hosted=hosted)
+    except AriaError as e:
+        console.print(f"[red]Error:[/red] {escape(str(e))}")
+        raise typer.Exit(code=1)
+
+    target = "hosted" if hosted else "local"
+    header = f"# Aria env for role '{role}' → {card.name} ({target})\n"
+    body = "\n".join(f"{k}={v}" for k, v in env.items()) + "\n"
+    content = header + body
+    if output:
+        output.write_text(content)
+        console.print(f"[green]Wrote {output}[/green]  ({card.name}, {target})")
+        console.print(f"[dim]Use it:  set -a; source {output}; set +a;  python -m aria.cli ask \"...\"[/dim]")
+    else:
+        console.print(content, end="")
 
 
 @team_app.command("models")

@@ -29,8 +29,8 @@ from aria.llm import (
     parse_openai_stream_line,
 )
 from aria.llm import LLMBackend
-from aria.models import BackendError, Chunk
-from aria.team import TeamJudge, load_catalog, parse_judge_scores, run_plan
+from aria.models import AriaError, BackendError, Chunk
+from aria.team import TeamJudge, env_for, load_catalog, parse_judge_scores, run_plan
 from aria.vectorstore import VectorStore
 
 
@@ -310,6 +310,34 @@ def test_run_plan_and_pick_carry_runnable_config():
         assert pick.license
         if pick.run.modality == "text":
             assert pick.run.local or pick.run.hosted
+
+
+def test_env_for_local_hosted_and_image():
+    cards = {m.id: m for m in load_catalog().models}
+
+    local = env_for(cards["qwen25-coder-32b"], hosted=False)
+    assert local["ARIA_LLM_BACKEND"] == "ollama"
+    assert local["ARIA_MODEL"] == "qwen2.5-coder:32b"
+
+    hosted = env_for(cards["qwen25-coder-32b"], hosted=True)
+    assert hosted["ARIA_LLM_BACKEND"] == "openai"
+    assert hosted["ARIA_MODEL"] == "Qwen/Qwen2.5-Coder-32B-Instruct"
+    assert "ARIA_API_KEY" in hosted
+
+    # Image model can't be an Aria chat backend.
+    try:
+        env_for(cards["flux1-schnell"])
+        raise AssertionError("expected AriaError for image model")
+    except AriaError:
+        pass
+
+    # Large model with no local tag → local target errors, hosted works.
+    try:
+        env_for(cards["kimi-k2"], hosted=False)
+        raise AssertionError("expected AriaError for missing local tag")
+    except AriaError:
+        pass
+    assert env_for(cards["kimi-k2"], hosted=True)["ARIA_MODEL"] == "moonshotai/Kimi-K2-Instruct"
 
 
 def test_noncommercial_models_excluded_by_default():
