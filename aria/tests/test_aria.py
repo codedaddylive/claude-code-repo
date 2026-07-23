@@ -8,6 +8,7 @@ embedding backend and the 'echo' LLM backend. Run with:
 """
 from __future__ import annotations
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -27,7 +28,9 @@ from aria.llm import (
     parse_openai_chat,
     parse_openai_stream_line,
 )
+from aria.llm import LLMBackend
 from aria.models import BackendError, Chunk
+from aria.team import TeamJudge, load_catalog, parse_judge_scores
 from aria.vectorstore import VectorStore
 
 
@@ -205,6 +208,89 @@ def test_embed_api_credential_fallback():
     )
     assert s2.resolved_embed_api_base_url == "https://embed.example/v1"
     assert s2.resolved_embed_api_key == "embed-only"
+
+
+def test_catalog_loads_and_is_consistent():
+    cat = load_catalog()
+    assert len(cat.models) >= 10
+    valid_roles = {r.id for r in cat.roles}
+    # Every affinity key references a real role; there is at least one image model.
+    for m in cat.models:
+        assert set(m.role_affinity).issubset(valid_roles), m.id
+        assert m.free_commercial_use in {"yes", "limited", "no"}
+    assert any(m.modality == "image" for m in cat.models)
+    assert "designer" in valid_roles
+
+
+def test_parse_judge_scores_tolerates_prose_and_fences():
+    good = '[{"id":"a","score":9,"reason":"x"},{"id":"b","score":4,"reason":"y"}]'
+    assert parse_judge_scores(good)[0]["id"] == "a"
+    fenced = 'Here you go:\n```json\n[{"id":"a","score":7}]\n```\nthanks!'
+    assert parse_judge_scores(fenced) == [{"id": "a", "score": 7}]
+    assert parse_judge_scores("no json here") == []
+    # Items missing required keys are dropped.
+    assert parse_judge_scores('[{"id":"a"},{"score":5}]') == []
+
+
+def test_team_heuristic_recommend_is_sane_and_deterministic():
+    judge = TeamJudge(EchoLLM())  # echo can't produce JSON → forces heuristic
+    roster = judge.recommend(method="heuristic")
+    assert roster.method == "heuristic"
+    picks = {p.role_id: p for p in roster.picks}
+    # Every role got a pick and a positive score.
+    assert set(picks) == {r.id for r in load_catalog().roles}
+    assert all(p.score > 0 for p in roster.picks)
+    # Designer must be an image model; reasoning pick should be a known reasoner.
+    designer_winner = picks["designer"].winner_id
+    image_ids = {m.id for m in load_catalog().models if m.modality == "image"}
+    assert designer_winner in image_ids
+    assert picks["reasoning"].winner_id in {"deepseek-r1", "qwq-32b"}
+    # Deterministic across runs.
+    assert judge.recommend(method="heuristic").model_dump() == roster.model_dump()
+
+
+def test_team_auto_falls_back_to_heuristic_with_echo_backend():
+    roster = TeamJudge(EchoLLM()).recommend(method="auto")
+    assert roster.method == "heuristic"  # echo reply can't be parsed as scores
+
+
+class _FakeJudgeLLM(LLMBackend):
+    """Scores a target id top and explicitly down-ranks the heuristic leaders,
+    so the judge's decision — not the catalog affinities — drives selection."""
+
+    def __init__(self, target_id: str, downrank: list[str]) -> None:
+        self.target_id = target_id
+        self.downrank = downrank
+
+    def chat(self, messages, *, temperature=0.2) -> str:
+        items = [{"id": self.target_id, "score": 10, "reason": "fake judge favors it"}]
+        items += [{"id": d, "score": 1, "reason": "downranked"} for d in self.downrank]
+        return json.dumps(items)
+
+
+def test_team_llm_judge_overrides_heuristic():
+    # Heuristic would tie several models at 10 for general coding. The judge
+    # promotes qwen2.5-coder and demotes the other leaders, so it must win —
+    # proving the LLM's scores, not the affinities, decide the pick.
+    judge = TeamJudge(_FakeJudgeLLM("qwen25-coder-32b",
+                                    downrank=["deepseek-v3", "kimi-k2", "glm-4.5"]))
+    roster = judge.recommend(method="llm")
+    assert roster.method == "llm"
+    picks = {p.role_id: p for p in roster.picks}
+    assert picks["general_coding"].winner_id == "qwen25-coder-32b"
+    assert picks["general_coding"].score == 10.0
+    # A text-only favorite never leaks into the image-only designer role.
+    image_ids = {m.id for m in load_catalog().models if m.modality == "image"}
+    assert picks["designer"].winner_id in image_ids
+
+
+def test_noncommercial_models_excluded_by_default():
+    judge = TeamJudge(EchoLLM())
+    role = load_catalog().role("designer")
+    default_ids = {c.id for c in judge.candidates_for(role)}
+    assert "flux1-dev" not in default_ids  # non-commercial license filtered out
+    with_nc = {c.id for c in judge.candidates_for(role, include_noncommercial=True)}
+    assert "flux1-dev" in with_nc
 
 
 def _run_all():

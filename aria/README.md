@@ -69,6 +69,39 @@ python -m aria.cli ingest .
 python -m aria.cli ask "what does the extractor module do?"
 ```
 
+## Build an AI team (LLM-as-a-judge)
+
+Aria can assemble a role→model "team" from a catalog of **free, open-source**
+models — the open analog of a proprietary roster. Its own LLM acts as the judge,
+scoring each candidate per role; it falls back to a deterministic heuristic when
+no model server is available.
+
+```bash
+python -m aria.cli team recommend                 # LLM judges (falls back to heuristic)
+python -m aria.cli team recommend --judge heuristic
+python -m aria.cli team recommend -o team.json     # save the roster
+python -m aria.cli team models                     # inspect the catalog
+python -m aria.cli team models --role designer
+```
+
+Example roster (heuristic judge; all free/open-weight — verify current ratings
+on live leaderboards, and edit `aria/data/models.json` to re-rank or add models):
+
+| Role | Pick | License |
+|---|---|---|
+| R&D | DeepSeek-R1 | MIT |
+| Frontend | Qwen2.5-Coder-32B | Apache-2.0 |
+| General coding | DeepSeek-V3 | DeepSeek (commercial OK) |
+| Deep engineering | DeepSeek-V3 | DeepSeek (commercial OK) |
+| Content writing | Qwen2.5-72B / Llama-3.3-70B | open (license limits apply) |
+| Designer (image) | FLUX.1 [schnell] | Apache-2.0 |
+| Reasoning | DeepSeek-R1 / QwQ-32B | MIT / Apache-2.0 |
+
+Non-commercial-licensed open weights (e.g. FLUX.1 [dev]) are excluded by default;
+add `--include-noncommercial` to consider them. "Highly rated" is qualitative —
+the catalog encodes reputation as an editable starting point and the LLM judge
+refines it; always confirm against LMArena / OpenLLM Leaderboard / Aider / SWE-bench.
+
 ## HTTP API
 
 ```bash
@@ -82,6 +115,8 @@ uvicorn aria.api:app --host 0.0.0.0 --port 8100 --workers 1
 | POST | `/ingest` | `{"source": "owner/repo"}` — index a repo |
 | POST | `/ask` | `{"question": "..."}` — answer with sources |
 | DELETE | `/repos/{owner}/{name}` | Remove an indexed repo |
+| GET | `/team/models` | The open-source model catalog + roles |
+| GET | `/team/recommend?method=auto` | Judge and return the recommended team |
 
 ## Configuration
 
@@ -163,7 +198,9 @@ aria/
 ├── vectorstore.py  # dependency-light persistent vector store
 ├── ingest.py       # repo cloning, file walking, chunking, indexing
 ├── agent.py        # RAG orchestration
-├── cli.py          # ingest / ask / chat / status / remove
+├── team.py         # LLM-as-a-judge: pick open-source models per role
+├── data/models.json# editable catalog of free/open-source models
+├── cli.py          # ingest / ask / chat / status / remove / team
 ├── api.py          # FastAPI server
 └── tests/          # offline test suite (no model server required)
 ```

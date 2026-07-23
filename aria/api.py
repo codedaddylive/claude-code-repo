@@ -9,6 +9,7 @@ from .agent import AriaAgent
 from .config import load_settings
 from .ingest import ingest_repo
 from .models import AriaError
+from .team import TeamJudge, load_catalog
 
 # A single in-process agent (the index is held in memory). Run with
 # `uvicorn aria.api:app --workers 1` because the index is not shared across
@@ -77,6 +78,27 @@ def ask(req: AskRequest) -> dict:
     except AriaError as e:
         raise HTTPException(status_code=502, detail=str(e))
     return answer.model_dump()
+
+
+@app.get("/team/models")
+def team_models() -> dict:
+    catalog = load_catalog()
+    return {
+        "roles": [r.model_dump() for r in catalog.roles],
+        "models": [m.model_dump() for m in catalog.models],
+    }
+
+
+@app.get("/team/recommend")
+def team_recommend(method: str = "auto", include_noncommercial: bool = False) -> dict:
+    if method not in ("auto", "llm", "heuristic"):
+        raise HTTPException(status_code=400, detail="method must be auto|llm|heuristic")
+    judge = TeamJudge(_agent().llm)
+    try:
+        roster = judge.recommend(method=method, include_noncommercial=include_noncommercial)
+    except AriaError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return roster.model_dump()
 
 
 @app.delete("/repos/{owner}/{name}")

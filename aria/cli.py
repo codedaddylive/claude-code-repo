@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Optional
+
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.markup import escape
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from .agent import AriaAgent
 from .config import load_settings
 from .ingest import ingest_repo
+from .llm import make_llm_backend
 from .models import AriaError
+from .team import TeamJudge, load_catalog
 
 app = typer.Typer(
     name="aria",
@@ -149,6 +155,96 @@ def cmd_remove(repo: str = typer.Argument(..., help="Repository name to remove (
         console.print(f"[green]Removed {removed} chunks for {repo}.[/green]")
     else:
         console.print(f"[yellow]No indexed content found for '{repo}'.[/yellow]")
+
+
+team_app = typer.Typer(
+    name="team",
+    help="Assemble an AI team of free, open-source models (LLM-as-a-judge).",
+    add_completion=False,
+)
+app.add_typer(team_app)
+
+
+@team_app.command("recommend")
+def cmd_team_recommend(
+    method: str = typer.Option(
+        "auto", "--judge", "-j",
+        help="Scoring mode: auto (LLM, heuristic fallback) | llm | heuristic.",
+    ),
+    include_noncommercial: bool = typer.Option(
+        False, "--include-noncommercial",
+        help="Also consider open-weight models whose license forbids commercial use.",
+    ),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save roster as JSON."),
+):
+    """Pick the best free/open-source model for each role and print the team."""
+    if method not in ("auto", "llm", "heuristic"):
+        console.print("[red]--judge must be one of: auto, llm, heuristic[/red]")
+        raise typer.Exit(code=1)
+    settings = load_settings()
+    judge = TeamJudge(make_llm_backend(settings))
+    try:
+        with Progress(SpinnerColumn(), TextColumn("{task.description}"), console=console) as p:
+            p.add_task(f"Judging candidates ({method})...", total=None)
+            roster = judge.recommend(method=method, include_noncommercial=include_noncommercial)
+    except AriaError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1)
+
+    table = Table(title=f"Aria AI team — free & open-source (judge: {roster.method})")
+    table.add_column("Role", style="bold")
+    table.add_column("Pick", style="cyan")
+    table.add_column("Score", justify="right")
+    table.add_column("Runners-up", style="dim")
+    for pick in roster.picks:
+        runners = ", ".join(f"{escape(c.name)} ({c.score:g})" for c in pick.runners_up)
+        table.add_row(pick.role_name, escape(pick.winner_name), f"{pick.score:g}", runners or "—")
+    console.print(table)
+    console.print("\n[dim]Why each pick:[/dim]")
+    for pick in roster.picks:
+        console.print(
+            f"  [bold]{pick.role_name}[/bold] → [cyan]{escape(pick.winner_name)}[/cyan]: "
+            f"{escape(pick.reason)}"
+        )
+
+    if output:
+        output.write_text(roster.model_dump_json(indent=2))
+        console.print(f"\n[green]Roster saved to {output}[/green]")
+    console.print(
+        "\n[dim]Ratings are qualitative; verify on live leaderboards (LMArena, "
+        "OpenLLM Leaderboard, Aider/SWE-bench). Edit aria/data/models.json to add "
+        "or re-rank models.[/dim]"
+    )
+
+
+@team_app.command("models")
+def cmd_team_models(
+    role: Optional[str] = typer.Option(None, "--role", "-r", help="Filter to one role id."),
+):
+    """List the open-source model catalog the judge chooses from."""
+    catalog = load_catalog()
+    if role:
+        try:
+            r = catalog.role(role)
+        except AriaError as e:
+            console.print(f"[red]{e}[/red] Roles: {', '.join(x.id for x in catalog.roles)}")
+            raise typer.Exit(code=1)
+        cards = [m for m in catalog.models if m.modality == r.modality]
+        title = f"Models for role '{r.name}'"
+    else:
+        cards = catalog.models
+        title = "Open-source model catalog"
+
+    table = Table(title=title)
+    table.add_column("Model", style="bold cyan")
+    table.add_column("Provider")
+    table.add_column("License")
+    table.add_column("Free comm.", justify="center")
+    table.add_column("Modality")
+    for m in cards:
+        table.add_row(escape(m.name), m.provider, escape(m.license),
+                      m.free_commercial_use, m.modality)
+    console.print(table)
 
 
 def _print_sources(sources) -> None:
