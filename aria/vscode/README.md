@@ -10,6 +10,26 @@ VS Code (this extension)  ──HTTP──►  Aria API server  ──►  open-
                                      (uvicorn aria.api)      (Ollama or hosted)
 ```
 
+## Screenshots
+
+**Chat panel** — docked beside your code; answers cite the files used, and
+clicking a source opens it at the line.
+
+![Aria chat panel in VS Code](media/chat-dark.png)
+
+**Command palette** — every action lives under the `Aria:` prefix.
+
+![Aria commands in the VS Code command palette](media/palette-dark.png)
+
+**AI team panel** — the open-source model roster (LLM-as-a-judge), with license
+and run command per role.
+
+![Aria AI team panel](media/team-dark.png)
+
+The panel follows your editor theme (light shown below):
+
+![Aria chat panel, light theme](media/chat-light.png)
+
 ## What it adds (Command Palette → "Aria: …")
 
 | Command | Does |
