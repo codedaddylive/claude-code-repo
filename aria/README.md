@@ -164,6 +164,7 @@ See [`config.example.yaml`](./config.example.yaml) for the full reference.
 | `ARIA_OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
 | `ARIA_EMBED_BACKEND` | `ollama` | `ollama`, `openai`, or `hash` (offline) |
 | `ARIA_EMBED_MODEL` | `nomic-embed-text` | embedding model id |
+| `ARIA_EMBED_PROVIDER_STYLE` | `generic` | set `nvidia` for NVIDIA NIM embeddings (adds `input_type`) |
 | `ARIA_API_BASE_URL` | `https://api.together.xyz/v1` | hosted provider URL (`openai` backend) |
 | `ARIA_API_KEY` | – | hosted provider key (`openai` backend) |
 | `ARIA_TOP_K` | `6` | chunks retrieved per query |
@@ -182,7 +183,11 @@ export ARIA_EMBED_MODEL=BAAI/bge-large-en-v1.5
 python -m aria.cli ask "..."      # or deploy the API via aria/Dockerfile
 ```
 
-A containerized deploy (Render/Railway/Fly, step by step) is documented in
+Works with any OpenAI-compatible provider (Together, OpenRouter, Groq, or a
+self-hosted vLLM). For a **free, first-party** option, use **NVIDIA NIM** —
+`ARIA_API_BASE_URL=https://integrate.api.nvidia.com/v1` with a free `nvapi-` key,
+plus `ARIA_EMBED_PROVIDER_STYLE=nvidia` if you also embed there. Presets (NVIDIA
+included) and a containerized deploy (Render/Railway/Fly) are in
 [`DEPLOY.md`](./DEPLOY.md).
 
 ### Try it locally with Docker (one command)

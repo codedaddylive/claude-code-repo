@@ -19,11 +19,16 @@ class EmbeddingBackend(ABC):
     dim: int
 
     @abstractmethod
-    def embed(self, texts: list[str]) -> np.ndarray:
-        """Return an ``(len(texts), dim)`` float32 array of unit-norm vectors."""
+    def embed(self, texts: list[str], input_type: str | None = None) -> np.ndarray:
+        """Return an ``(len(texts), dim)`` float32 array of unit-norm vectors.
 
-    def embed_one(self, text: str) -> np.ndarray:
-        return self.embed([text])[0]
+        ``input_type`` ("query" | "passage") is a hint some providers (notably
+        NVIDIA NIM) require for asymmetric retrieval models; most backends
+        ignore it. Aria passes "passage" when indexing and "query" when searching.
+        """
+
+    def embed_one(self, text: str, input_type: str | None = None) -> np.ndarray:
+        return self.embed([text], input_type=input_type)[0]
 
 
 def _l2_normalize(matrix: np.ndarray) -> np.ndarray:
@@ -44,7 +49,7 @@ class HashEmbedding(EmbeddingBackend):
     def __init__(self, dim: int = 512) -> None:
         self.dim = dim
 
-    def embed(self, texts: list[str]) -> np.ndarray:
+    def embed(self, texts: list[str], input_type: str | None = None) -> np.ndarray:
         out = np.zeros((len(texts), self.dim), dtype=np.float32)
         for i, text in enumerate(texts):
             for tok in _TOKEN_RE.findall(text.lower()):
@@ -74,7 +79,7 @@ class OllamaEmbedding(EmbeddingBackend):
     def dim(self, value: int) -> None:
         self._dim = value
 
-    def embed(self, texts: list[str]) -> np.ndarray:
+    def embed(self, texts: list[str], input_type: str | None = None) -> np.ndarray:
         vectors: list[list[float]] = []
         try:
             with httpx.Client(timeout=self.timeout) as client:
@@ -99,14 +104,28 @@ def parse_openai_embeddings(data: dict) -> list[list[float]]:
 
 
 class OpenAICompatEmbedding(EmbeddingBackend):
-    """Embeddings from any OpenAI-compatible hosted provider (e.g. Together)."""
+    """Embeddings from any OpenAI-compatible hosted provider (e.g. Together).
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: float = 60.0) -> None:
+    Set ``nvidia_style=True`` for NVIDIA NIM embedding models, which require an
+    ``input_type`` ("query"/"passage") and a ``truncate`` field beyond the plain
+    OpenAI schema.
+    """
+
+    def __init__(self, base_url: str, api_key: str, model: str, timeout: float = 60.0,
+                 nvidia_style: bool = False) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
         self.timeout = timeout
+        self.nvidia_style = nvidia_style
         self._dim: int | None = None
+
+    def _build_body(self, texts: list[str], input_type: str | None) -> dict:
+        body: dict = {"model": self.model, "input": texts}
+        if self.nvidia_style:
+            body["input_type"] = input_type or "passage"
+            body["truncate"] = "END"
+        return body
 
     @property
     def dim(self) -> int:  # type: ignore[override]
@@ -118,7 +137,7 @@ class OpenAICompatEmbedding(EmbeddingBackend):
     def dim(self, value: int) -> None:
         self._dim = value
 
-    def embed(self, texts: list[str]) -> np.ndarray:
+    def embed(self, texts: list[str], input_type: str | None = None) -> np.ndarray:
         try:
             with httpx.Client(timeout=self.timeout) as client:
                 resp = client.post(
@@ -127,7 +146,7 @@ class OpenAICompatEmbedding(EmbeddingBackend):
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
                     },
-                    json={"model": self.model, "input": texts},
+                    json=self._build_body(texts, input_type),
                 )
                 resp.raise_for_status()
                 vectors = parse_openai_embeddings(resp.json())
@@ -153,5 +172,6 @@ def make_embedding_backend(settings: AriaSettings) -> EmbeddingBackend:
             base_url=settings.resolved_embed_api_base_url,
             api_key=key,
             model=settings.embed_model,
+            nvidia_style=(settings.embed_provider_style == "nvidia"),
         )
     return OllamaEmbedding(host=settings.ollama_host, model=settings.embed_model)

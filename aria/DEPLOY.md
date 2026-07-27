@@ -37,6 +37,34 @@ ARIA_EMBED_MODEL=BAAI/bge-large-en-v1.5
 ARIA_DATA_DIR=/data          # persist the index here (see Step 3)
 ```
 
+### Preset: NVIDIA NIM (free, first-party)
+
+[NVIDIA `build.nvidia.com`](https://build.nvidia.com) gives a free developer key
+(no credit card) and an OpenAI-compatible endpoint hosting the same open models
+Aria's team judge picks (DeepSeek-R1, Llama, Qwen, Mistral). It's a legitimate
+first-party option — no free-tier pooling — but has a small rate/credit limit,
+so it's best for personal use, not production traffic.
+
+```bash
+ARIA_LLM_BACKEND=openai
+ARIA_API_BASE_URL=https://integrate.api.nvidia.com/v1
+ARIA_API_KEY=nvapi-xxxxxxxx          # from build.nvidia.com → "Get API Key"
+ARIA_MODEL=deepseek-ai/deepseek-r1   # or meta/llama-3.1-70b-instruct, qwen/...
+
+# Embeddings via NVIDIA need input_type/truncate — set the provider style:
+ARIA_EMBED_BACKEND=openai
+ARIA_EMBED_PROVIDER_STYLE=nvidia
+ARIA_EMBED_MODEL=nvidia/nv-embedqa-e5-v5
+# ...or skip hosted embeddings entirely and index locally/offline:
+#   ARIA_EMBED_BACKEND=ollama   (nomic-embed-text)   |   ARIA_EMBED_BACKEND=hash
+```
+
+Any other gateway that exposes an OpenAI-compatible endpoint (e.g. an
+[OmniRoute](https://github.com/diegosouzapw/OmniRoute) instance at
+`http://localhost:20128/v1`) works the same way — point `ARIA_API_BASE_URL` at
+it. For third-party free-tier gateways, mind their terms of service and that
+your prompts route through them.
+
 ---
 
 ## Step 2 — Run the container

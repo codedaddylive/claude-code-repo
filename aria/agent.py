@@ -50,7 +50,7 @@ class AriaAgent:
 
     # --- retrieval ---------------------------------------------------------
     def retrieve(self, question: str, top_k: int | None = None) -> list[SearchResult]:
-        query_vec = self.embedder.embed_one(question)
+        query_vec = self.embedder.embed_one(question, input_type="query")
         return self.store.search(query_vec, top_k=top_k or self.settings.top_k)
 
     def _build_context(self, results: list[SearchResult]) -> str:

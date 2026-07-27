@@ -170,7 +170,7 @@ def ingest_repo(
             on_progress(i + 1, len(files), rel)
 
     if all_chunks:
-        vectors = embedder.embed([c.text for c in all_chunks])
+        vectors = embedder.embed([c.text for c in all_chunks], input_type="passage")
         store.add(all_chunks, vectors)
 
     return RepoStats(repo=repo_name, files=len(files), chunks=len(all_chunks))

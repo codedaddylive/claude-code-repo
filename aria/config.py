@@ -73,6 +73,11 @@ class AriaSettings(BaseSettings):
         default=512,
         description="Dimensionality used by the offline 'hash' embedding backend.",
     )
+    embed_provider_style: Literal["generic", "nvidia"] = Field(
+        default="generic",
+        description="Set to 'nvidia' when embed_backend=openai points at NVIDIA "
+        "NIM, so requests include the required input_type/truncate fields.",
+    )
 
     # --- Retrieval ---------------------------------------------------------
     top_k: int = Field(default=6, description="Number of chunks retrieved per query.")

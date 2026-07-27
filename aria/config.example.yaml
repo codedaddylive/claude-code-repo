@@ -28,6 +28,9 @@ ARIA_EMBED_BACKEND: ollama
 # For Ollama: nomic-embed-text. For 'openai': e.g. BAAI/bge-large-en-v1.5.
 ARIA_EMBED_MODEL: nomic-embed-text
 ARIA_EMBED_DIM: 512            # only used by the 'hash' backend
+# Set to 'nvidia' when embed_backend=openai points at NVIDIA NIM (adds the
+# required input_type/truncate fields). Leave 'generic' for Together/OpenAI/etc.
+ARIA_EMBED_PROVIDER_STYLE: generic
 
 # --- Retrieval / chunking ---
 ARIA_TOP_K: 6

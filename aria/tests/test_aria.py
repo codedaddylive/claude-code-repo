@@ -210,6 +210,30 @@ def test_embed_api_credential_fallback():
     assert s2.resolved_embed_api_key == "embed-only"
 
 
+def test_nvidia_embedding_body_includes_input_type():
+    generic = OpenAICompatEmbedding("http://x/v1", "k", "m", nvidia_style=False)
+    assert generic._build_body(["a"], "query") == {"model": "m", "input": ["a"]}
+
+    nv = OpenAICompatEmbedding("https://integrate.api.nvidia.com/v1", "k",
+                               "nvidia/nv-embedqa-e5-v5", nvidia_style=True)
+    q = nv._build_body(["a"], "query")
+    assert q["input_type"] == "query" and q["truncate"] == "END"
+    # Indexing default is 'passage' when the caller doesn't specify.
+    assert nv._build_body(["a"], None)["input_type"] == "passage"
+
+
+def test_embed_provider_style_nvidia_wiring():
+    s = load_settings(
+        embed_backend="openai", api_key="nvapi-xxx", embed_provider_style="nvidia",
+        api_base_url="https://integrate.api.nvidia.com/v1",
+        embed_model="nvidia/nv-embedqa-e5-v5",
+    )
+    be = make_embedding_backend(s)
+    assert isinstance(be, OpenAICompatEmbedding) and be.nvidia_style is True
+    # Offline hash/generic path is unaffected by input_type.
+    assert HashEmbedding(dim=32).embed(["x"], input_type="query").shape == (1, 32)
+
+
 def test_catalog_loads_and_is_consistent():
     cat = load_catalog()
     assert len(cat.models) >= 10
