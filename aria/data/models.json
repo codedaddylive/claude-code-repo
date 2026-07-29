@@ -1,0 +1,164 @@
+{
+  "_comment": "Curated catalog of free / open-weight models for Aria's team judge. Edit freely as new open models ship. 'role_affinity' is a 1-5 starting heuristic (Aria's LLM judge refines it); 'free_commercial_use' is yes | limited | no. 'ollama' is a local run tag (blank = too large / not packaged); 'hosted_id' is a typical OpenAI-compatible provider/HF id (blank = confirm with your provider). Licenses/ids are best-effort as of early 2026 — verify for your use. 'highly rated' is qualitative; check live leaderboards (LMArena, OpenLLM Leaderboard, Aider/SWE-bench, Artificial Analysis).",
+  "roles": [
+    {"id": "rnd", "name": "R&D", "modality": "text", "description": "Open-ended research, ideation, literature synthesis, exploring novel approaches and trade-offs."},
+    {"id": "frontend", "name": "Frontend", "modality": "text", "description": "UI/UX code: React/TS/CSS, component design, fast iteration on interactive apps."},
+    {"id": "general_coding", "name": "General coding", "modality": "text", "description": "Everyday programming across languages: features, refactors, tests, bug fixes, tooling."},
+    {"id": "deep_engineering", "name": "Deep engineering", "modality": "text", "description": "Large-scale systems, complex multi-file changes, architecture, debugging hard problems."},
+    {"id": "content_writing", "name": "Content writing", "modality": "text", "description": "Docs, articles, marketing copy, long-form prose with strong tone and fluency."},
+    {"id": "designer", "name": "Designer", "modality": "image", "description": "Text-to-image generation: mockups, illustrations, marketing visuals, concept art."},
+    {"id": "reasoning", "name": "Reasoning", "modality": "text", "description": "Step-by-step reasoning, math, logic, planning, verification of hard problems."}
+  ],
+  "models": [
+    {
+      "id": "deepseek-r1", "name": "DeepSeek-R1", "provider": "DeepSeek", "modality": "text",
+      "license": "MIT", "open_weights": true, "free_commercial_use": "yes",
+      "params": "671B MoE (37B active); distills 1.5B-70B",
+      "ollama": "deepseek-r1", "hosted_id": "deepseek-ai/DeepSeek-R1",
+      "run": "ollama run deepseek-r1  (distills: deepseek-r1:7b/8b/14b/32b/70b)",
+      "homepage": "https://github.com/deepseek-ai/DeepSeek-R1",
+      "strengths": ["chain-of-thought reasoning", "math", "research analysis", "planning"],
+      "role_affinity": {"reasoning": 5, "rnd": 5, "deep_engineering": 4, "general_coding": 3, "content_writing": 3, "frontend": 2}
+    },
+    {
+      "id": "deepseek-v3", "name": "DeepSeek-V3", "provider": "DeepSeek", "modality": "text",
+      "license": "DeepSeek License (commercial OK)", "open_weights": true, "free_commercial_use": "yes",
+      "params": "671B MoE (37B active)",
+      "ollama": "deepseek-v3", "hosted_id": "deepseek-ai/DeepSeek-V3",
+      "run": "ollama run deepseek-v3  (large; needs strong hardware or a hosted endpoint)",
+      "homepage": "https://github.com/deepseek-ai/DeepSeek-V3",
+      "strengths": ["strong general coding", "long context", "agentic tasks", "cost-efficient"],
+      "role_affinity": {"deep_engineering": 5, "general_coding": 5, "rnd": 4, "reasoning": 4, "content_writing": 4, "frontend": 4}
+    },
+    {
+      "id": "qwen25-coder-32b", "name": "Qwen2.5-Coder-32B-Instruct", "provider": "Alibaba (Qwen)", "modality": "text",
+      "license": "Apache-2.0", "open_weights": true, "free_commercial_use": "yes",
+      "params": "32B",
+      "ollama": "qwen2.5-coder:32b", "hosted_id": "Qwen/Qwen2.5-Coder-32B-Instruct",
+      "run": "ollama run qwen2.5-coder:32b  (also 7b/14b)",
+      "homepage": "https://github.com/QwenLM/Qwen2.5-Coder",
+      "strengths": ["top open coding model", "code completion", "multi-language", "frontend + backend"],
+      "role_affinity": {"general_coding": 5, "frontend": 5, "deep_engineering": 4, "rnd": 3, "reasoning": 3, "content_writing": 2}
+    },
+    {
+      "id": "qwen25-72b", "name": "Qwen2.5-72B-Instruct", "provider": "Alibaba (Qwen)", "modality": "text",
+      "license": "Qwen License (commercial OK <100M MAU)", "open_weights": true, "free_commercial_use": "limited",
+      "params": "72B",
+      "ollama": "qwen2.5:72b", "hosted_id": "Qwen/Qwen2.5-72B-Instruct",
+      "run": "ollama run qwen2.5:72b  (also 7b/14b/32b)",
+      "homepage": "https://github.com/QwenLM/Qwen2.5",
+      "strengths": ["strong all-round", "multilingual", "writing", "instruction following"],
+      "role_affinity": {"content_writing": 5, "general_coding": 4, "rnd": 4, "reasoning": 4, "deep_engineering": 3, "frontend": 3}
+    },
+    {
+      "id": "qwq-32b", "name": "QwQ-32B", "provider": "Alibaba (Qwen)", "modality": "text",
+      "license": "Apache-2.0", "open_weights": true, "free_commercial_use": "yes",
+      "params": "32B",
+      "ollama": "qwq", "hosted_id": "Qwen/QwQ-32B",
+      "run": "ollama run qwq",
+      "homepage": "https://github.com/QwenLM/QwQ",
+      "strengths": ["reasoning-focused", "math", "competitive with much larger models on logic"],
+      "role_affinity": {"reasoning": 5, "rnd": 4, "deep_engineering": 4, "general_coding": 3, "content_writing": 2, "frontend": 2}
+    },
+    {
+      "id": "llama-3.3-70b", "name": "Llama-3.3-70B-Instruct", "provider": "Meta", "modality": "text",
+      "license": "Llama 3.3 Community License", "open_weights": true, "free_commercial_use": "limited",
+      "params": "70B",
+      "ollama": "llama3.3", "hosted_id": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "run": "ollama run llama3.3",
+      "homepage": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+      "strengths": ["well-rounded", "strong writing", "wide ecosystem support", "reliable"],
+      "role_affinity": {"content_writing": 5, "general_coding": 4, "rnd": 4, "reasoning": 3, "deep_engineering": 3, "frontend": 3}
+    },
+    {
+      "id": "llama-4-maverick", "name": "Llama 4 Maverick", "provider": "Meta", "modality": "text",
+      "license": "Llama 4 Community License", "open_weights": true, "free_commercial_use": "limited",
+      "params": "MoE (17B active, 400B total)",
+      "ollama": "llama4:maverick", "hosted_id": "",
+      "run": "ollama run llama4:maverick (large; hosted endpoint recommended); weights on Hugging Face",
+      "homepage": "https://huggingface.co/meta-llama",
+      "strengths": ["long context", "multimodal input", "general R&D", "broad knowledge"],
+      "role_affinity": {"rnd": 5, "general_coding": 4, "content_writing": 4, "reasoning": 4, "deep_engineering": 4, "frontend": 3}
+    },
+    {
+      "id": "kimi-k2", "name": "Kimi K2", "provider": "Moonshot AI", "modality": "text",
+      "license": "Modified MIT", "open_weights": true, "free_commercial_use": "yes",
+      "params": "1T MoE (32B active)",
+      "ollama": "", "hosted_id": "moonshotai/Kimi-K2-Instruct",
+      "run": "hosted endpoint recommended (very large); weights on Hugging Face",
+      "homepage": "https://huggingface.co/moonshotai",
+      "strengths": ["agentic coding", "tool use", "frontend generation", "long horizon tasks"],
+      "role_affinity": {"frontend": 5, "general_coding": 5, "deep_engineering": 4, "rnd": 4, "reasoning": 3, "content_writing": 3}
+    },
+    {
+      "id": "glm-4.5", "name": "GLM-4.5", "provider": "Zhipu AI", "modality": "text",
+      "license": "MIT", "open_weights": true, "free_commercial_use": "yes",
+      "params": "MoE (large + Air variant)",
+      "ollama": "glm4", "hosted_id": "",
+      "run": "ollama run glm4  (family); larger GLM-4.5 variants via hosted endpoint",
+      "homepage": "https://github.com/THUDM/GLM-4",
+      "strengths": ["agentic + coding", "tool calling", "balanced general use", "bilingual"],
+      "role_affinity": {"general_coding": 5, "deep_engineering": 4, "frontend": 4, "rnd": 4, "reasoning": 4, "content_writing": 3}
+    },
+    {
+      "id": "mixtral-8x22b", "name": "Mixtral-8x22B-Instruct", "provider": "Mistral AI", "modality": "text",
+      "license": "Apache-2.0", "open_weights": true, "free_commercial_use": "yes",
+      "params": "141B MoE (39B active)",
+      "ollama": "mixtral:8x22b", "hosted_id": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+      "run": "ollama run mixtral:8x22b",
+      "homepage": "https://mistral.ai/news/mixtral-8x22b/",
+      "strengths": ["fast MoE", "general purpose", "multilingual", "permissive license"],
+      "role_affinity": {"general_coding": 4, "content_writing": 4, "rnd": 3, "reasoning": 3, "deep_engineering": 3, "frontend": 3}
+    },
+    {
+      "id": "gemma-3-27b", "name": "Gemma 3 27B", "provider": "Google", "modality": "text",
+      "license": "Gemma Terms of Use", "open_weights": true, "free_commercial_use": "limited",
+      "params": "27B",
+      "ollama": "gemma3:27b", "hosted_id": "google/gemma-3-27b-it",
+      "run": "ollama run gemma3:27b  (also 1b/4b/12b)",
+      "homepage": "https://ai.google.dev/gemma",
+      "strengths": ["efficient", "strong writing/tone", "multilingual", "runs on modest hardware"],
+      "role_affinity": {"content_writing": 5, "rnd": 3, "general_coding": 3, "reasoning": 3, "frontend": 3, "deep_engineering": 2}
+    },
+    {
+      "id": "phi-4", "name": "Phi-4", "provider": "Microsoft", "modality": "text",
+      "license": "MIT", "open_weights": true, "free_commercial_use": "yes",
+      "params": "14B",
+      "ollama": "phi4", "hosted_id": "microsoft/phi-4",
+      "run": "ollama run phi4",
+      "homepage": "https://huggingface.co/microsoft/phi-4",
+      "strengths": ["strong reasoning per parameter", "math", "efficient", "MIT licensed"],
+      "role_affinity": {"reasoning": 4, "general_coding": 3, "rnd": 3, "deep_engineering": 3, "content_writing": 2, "frontend": 2}
+    },
+    {
+      "id": "flux1-schnell", "name": "FLUX.1 [schnell]", "provider": "Black Forest Labs", "modality": "image",
+      "license": "Apache-2.0", "open_weights": true, "free_commercial_use": "yes",
+      "params": "12B rectified-flow transformer",
+      "ollama": "", "hosted_id": "black-forest-labs/FLUX.1-schnell",
+      "run": "ComfyUI / diffusers; weights on Hugging Face (black-forest-labs/FLUX.1-schnell)",
+      "homepage": "https://github.com/black-forest-labs/flux",
+      "strengths": ["state-of-the-art open image quality", "fast (few-step)", "commercial-friendly (Apache-2.0)"],
+      "role_affinity": {"designer": 5}
+    },
+    {
+      "id": "flux1-dev", "name": "FLUX.1 [dev]", "provider": "Black Forest Labs", "modality": "image",
+      "license": "FLUX.1-dev Non-Commercial License", "open_weights": true, "free_commercial_use": "no",
+      "params": "12B rectified-flow transformer",
+      "ollama": "", "hosted_id": "black-forest-labs/FLUX.1-dev",
+      "run": "ComfyUI / diffusers; weights on Hugging Face (black-forest-labs/FLUX.1-dev)",
+      "homepage": "https://github.com/black-forest-labs/flux",
+      "strengths": ["highest open image fidelity", "prompt adherence"],
+      "role_affinity": {"designer": 4}
+    },
+    {
+      "id": "sd-3.5-large", "name": "Stable Diffusion 3.5 Large", "provider": "Stability AI", "modality": "image",
+      "license": "Stability Community License (free < $1M rev)", "open_weights": true, "free_commercial_use": "limited",
+      "params": "8B",
+      "ollama": "", "hosted_id": "stabilityai/stable-diffusion-3.5-large",
+      "run": "ComfyUI / diffusers; weights on Hugging Face (stabilityai/stable-diffusion-3.5-large)",
+      "homepage": "https://stability.ai/news/introducing-stable-diffusion-3-5",
+      "strengths": ["photorealism", "typography", "large ecosystem of tooling/LoRAs"],
+      "role_affinity": {"designer": 5}
+    }
+  ]
+}

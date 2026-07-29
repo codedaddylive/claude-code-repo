@@ -1,0 +1,57 @@
+{
+  "name": "aria-vscode",
+  "displayName": "Aria — open-source repo assistant",
+  "description": "Ask questions over your GitHub repositories with cited answers, powered by open-source models via a local Aria server. Independent of any other assistant.",
+  "version": "0.1.0",
+  "publisher": "aria",
+  "license": "MIT",
+  "engines": { "vscode": "^1.82.0" },
+  "categories": ["Machine Learning", "Other"],
+  "keywords": ["rag", "code search", "open source", "llm", "ollama", "codebase", "assistant"],
+  "icon": "media/icon.png",
+  "galleryBanner": { "color": "#0e639c", "theme": "dark" },
+  "pricing": "Free",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codedaddylive/claude-code-repo.git",
+    "directory": "aria/vscode"
+  },
+  "bugs": { "url": "https://github.com/codedaddylive/claude-code-repo/issues" },
+  "homepage": "https://github.com/codedaddylive/claude-code-repo/tree/main/aria",
+  "main": "./extension.js",
+  "activationEvents": [
+    "onCommand:aria.openChat",
+    "onCommand:aria.ask",
+    "onCommand:aria.ingestWorkspace",
+    "onCommand:aria.ingestRepo",
+    "onCommand:aria.team",
+    "onCommand:aria.checkHealth",
+    "onCommand:aria.startServer"
+  ],
+  "contributes": {
+    "commands": [
+      { "command": "aria.openChat", "title": "Aria: Open Chat", "category": "Aria" },
+      { "command": "aria.ask", "title": "Aria: Ask a Question…", "category": "Aria" },
+      { "command": "aria.ingestWorkspace", "title": "Aria: Index Workspace Folder(s)", "category": "Aria" },
+      { "command": "aria.ingestRepo", "title": "Aria: Index a GitHub Repo…", "category": "Aria" },
+      { "command": "aria.team", "title": "Aria: Recommend AI Team", "category": "Aria" },
+      { "command": "aria.checkHealth", "title": "Aria: Check Server Health", "category": "Aria" },
+      { "command": "aria.startServer", "title": "Aria: Start Local Server", "category": "Aria" }
+    ],
+    "configuration": {
+      "title": "Aria",
+      "properties": {
+        "aria.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8100",
+          "description": "Base URL of the running Aria API server (uvicorn aria.api:app)."
+        },
+        "aria.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Python interpreter used by 'Aria: Start Local Server'."
+        }
+      }
+    }
+  }
+}

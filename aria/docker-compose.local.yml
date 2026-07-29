@@ -1,0 +1,39 @@
+# Aria — fully local, zero API cost (runs open models via Ollama on your machine).
+# No API key needed. Small models work on CPU; a GPU is much faster.
+#
+#   1. docker compose -f aria/docker-compose.local.yml up --build -d
+#   2. one-time: pull the models into the Ollama container
+#        docker compose -f aria/docker-compose.local.yml exec ollama ollama pull llama3.1:8b
+#        docker compose -f aria/docker-compose.local.yml exec ollama ollama pull nomic-embed-text
+#   3. open http://localhost:8100/health
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+  aria:
+    build:
+      context: ..
+      dockerfile: aria/Dockerfile
+    depends_on:
+      - ollama
+    ports:
+      - "8100:8100"
+    environment:
+      ARIA_LLM_BACKEND: ollama
+      ARIA_EMBED_BACKEND: ollama
+      ARIA_OLLAMA_HOST: http://ollama:11434
+      ARIA_MODEL: llama3.1:8b
+      ARIA_EMBED_MODEL: nomic-embed-text
+      ARIA_DATA_DIR: /data
+    volumes:
+      - aria-data:/data
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+  aria-data:
