@@ -175,6 +175,8 @@ def test_openai_response_parsers():
     assert parse_openai_stream_line("data: [DONE]") is None
     assert parse_openai_stream_line("") is None
     assert parse_openai_stream_line(": keep-alive") is None
+    # Final usage-only chunk with empty choices (NVIDIA NIM) — not an error.
+    assert parse_openai_stream_line('data: {"choices":[],"usage":{"total_tokens":5}}') is None
 
 
 def test_backend_factory_selection_and_key_validation():

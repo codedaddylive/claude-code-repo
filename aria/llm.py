@@ -119,7 +119,12 @@ def parse_openai_stream_line(line: str) -> str | None:
     if payload == "[DONE]":
         return None
     data = json.loads(payload)
-    return data.get("choices", [{}])[0].get("delta", {}).get("content")
+    # Some providers (e.g. NVIDIA NIM) send a final chunk with an empty
+    # "choices" list (usage-only) — treat it as a non-content line.
+    choices = data.get("choices") or []
+    if not choices:
+        return None
+    return choices[0].get("delta", {}).get("content")
 
 
 class OpenAICompatLLM(LLMBackend):
