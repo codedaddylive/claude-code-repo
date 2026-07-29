@@ -4,10 +4,20 @@
   "description": "Ask questions over your GitHub repositories with cited answers, powered by open-source models via a local Aria server. Independent of any other assistant.",
   "version": "0.1.0",
   "publisher": "aria",
-  "license": "SEE LICENSE IN ../README.md",
+  "license": "MIT",
   "engines": { "vscode": "^1.82.0" },
   "categories": ["Machine Learning", "Other"],
+  "keywords": ["rag", "code search", "open source", "llm", "ollama", "codebase", "assistant"],
   "icon": "media/icon.png",
+  "galleryBanner": { "color": "#0e639c", "theme": "dark" },
+  "pricing": "Free",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codedaddylive/claude-code-repo.git",
+    "directory": "aria/vscode"
+  },
+  "bugs": { "url": "https://github.com/codedaddylive/claude-code-repo/issues" },
+  "homepage": "https://github.com/codedaddylive/claude-code-repo/tree/main/aria",
   "main": "./extension.js",
   "activationEvents": [
     "onCommand:aria.openChat",

@@ -15,3 +15,7 @@ build/
 *.webm
 frames/
 .aria/
+
+# VS Code extension build artifacts
+*.vsix
+node_modules/
